@@ -1,5 +1,6 @@
 [build]
   publish = "."
+  command = "echo 'Patinhas: sem etapa de build'"
 
 [functions]
   directory = "netlify/functions"
