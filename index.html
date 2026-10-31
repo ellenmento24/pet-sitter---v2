@@ -184,7 +184,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 
 /* finance */
 .fin-nav{display:flex;align-items:center;justify-content:space-between;margin:12px 0 4px}
-.fin-nav b{font-size:17px;text-transform:capitalize}
+.fin-nav b{font-size:17px}
 .total{font-size:34px;font-weight:750;letter-spacing:-.02em}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .stat{border-radius:14px;padding:10px;background:var(--chip)}
@@ -232,6 +232,42 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 .banner b{color:var(--warn)}
 .sync-status{font-size:14px;margin:8px 0 2px}
 .sync-status.err{color:var(--danger);font-weight:600}
+
+/* carrossel da agenda */
+.carousel{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin:8px -16px 0;cursor:grab;touch-action:pan-x pan-y}
+.carousel::-webkit-scrollbar{display:none}
+.carousel.dragging{cursor:grabbing;scroll-snap-type:none}
+.panel{flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always;padding:0 16px;box-sizing:border-box}
+.panel .days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.mtitle{display:flex;justify-content:space-between;align-items:baseline;margin:2px 4px 8px}
+.mtitle b{font-size:17px}
+.mtitle span{font-size:12px;color:var(--muted)}
+.mhead,.mgrid{display:grid;grid-template-columns:repeat(7,1fr)}
+.mhead span{text-align:center;font-size:11px;color:var(--muted);font-weight:600;padding-bottom:2px}
+.mday{border:0;background:none;padding:2px 0 3px;display:flex;flex-direction:column;align-items:center;gap:1px}
+.mday b{font-size:15px;font-weight:600;width:34px;height:34px;display:grid;place-items:center;border-radius:50%}
+.mday.today b{color:var(--accent)}
+.mday.sel b{background:var(--accent);color:#fff}
+.mday i,.day i{width:5px;height:5px;border-radius:50%;background:transparent}
+.mday i.dot{background:var(--accent)}
+.day i.appt,.mday i.appt{background:var(--warn)}
+.swipe-hint{text-align:center;font-size:11px;color:var(--muted);margin-top:2px}
+/* busca de cliente */
+.pick-list{max-height:290px;overflow-y:auto;margin-top:8px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.pick-row{display:flex;align-items:center;gap:12px;width:100%;border:0;border-bottom:1px solid var(--line);background:none;padding:10px 12px;text-align:left}
+.pick-row:last-child{border-bottom:0}
+.pick-row .thumb{width:38px;height:38px;font-size:18px}
+.pick-row .grow{display:flex;flex-direction:column;min-width:0;flex:1}
+.pick-row b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.picked{margin:0}
+/* financeiro: a receber */
+.owed{background:var(--card);border:2px solid var(--warn);border-radius:18px;padding:14px;margin:10px 0}
+.owed .total{color:var(--warn)}
+.owed-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);text-decoration:none;color:inherit}
+.owed-row:first-of-type{margin-top:10px}
+.owed-row .grow{flex:1;min-width:0}
+.pay-btn{border:0;border-radius:999px;background:var(--accent);color:#fff;font-weight:650;font-size:13px;padding:7px 12px;margin-top:6px;white-space:nowrap}
+.allgood{background:var(--accent-soft);color:var(--accent);border-color:transparent;font-weight:600;text-align:center}
 </style>
 </head>
 <body>
@@ -490,7 +526,10 @@ function statusOf(s) { const t = todayS(); if ((s.end || s.start) < t) return 'C
 
 /* ---------- estado de navegação ---------- */
 let selDate = todayS();
-let finMode = 'semana', finAnchor = todayS();
+let finMode = 'mes', finAnchor = todayS();
+let agendaMode = (() => { try { return localStorage.getItem('agendaMode') || 'semana'; } catch (e) { return 'semana'; } })();
+let pickSearch = '';
+const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 let svcFilter = 'ativos', svcSearch = '', cliSearch = '';
 let form = null; const formStack = [];
 let pickTarget = null; let showAllVisits = false; let chartYear = new Date().getFullYear();
@@ -525,6 +564,7 @@ function render(keep = false) {
   hydratePhotos();
   if (route === 'servico-editar') updateLive();
   if (route === 'ajustes') fillStorageInfo();
+  if (route === 'agenda' || !route) setupCarousel();
   updateSyncUI();
   if (!keep) window.scrollTo(0, 0);
 }
@@ -532,16 +572,25 @@ function render(keep = false) {
 /* ---------- AGENDA ---------- */
 function viewAgenda() {
   setHeader('Agenda', {right: `<a class="hdr-btn gear" href="#ajustes" aria-label="Ajustes">${GEAR}<i id="sync-dot"></i></a>`});
-  const t = todayS(); const ws = weekStart(selDate);
-  const days = [...Array(7)].map((_, i) => addDays(ws, i));
-  const weekOcc = occIn(days[0], days[6]);
-  const cnt = d => weekOcc.filter(o => o.date === d).length;
-  const dayOcc = weekOcc.filter(o => o.date === selDate);
+  const t = todayS(); const sd = parseD(selDate);
+  let a, b;
+  if (agendaMode === 'mes') { a = fmtD(new Date(sd.getFullYear(), sd.getMonth() - 1, 1)); b = fmtD(new Date(sd.getFullYear(), sd.getMonth() + 2, 0)); }
+  else { a = addDays(weekStart(selDate), -7); b = addDays(weekStart(selDate), 13); }
+  const rangeOcc = occIn(a, b); const marks = {};
+  rangeOcc.forEach(o => { const m = marks[o.date] || (marks[o.date] = {svc: 0, appt: 0}); if (isAppt(o.s)) m.appt++; else m.svc++; });
+  const dot = d => { const m = marks[d]; return !m ? '' : m.svc ? 'dot' : 'dot appt'; };
+  const dayOcc = rangeOcc.filter(o => o.date === selDate);
   const doneN = dayOcc.filter(o => o.s.done && o.s.done[o.key]).length;
   let h = syncKey ? '' : `<a class="card banner" href="#ajustes"><span style="font-size:22px">☁️</span><span class="small"><b>Sincronização desligada.</b> Os dados estão só neste aparelho. Toque para conectar.</span></a>`;
-  h += `<div class="week"><button class="arrow" data-action="week" data-n="-7" aria-label="Semana anterior">‹</button><div class="days">`;
-  h += days.map(d => `<button class="day ${d === selDate ? 'sel' : ''} ${d === t ? 'today' : ''}" data-action="pick-day" data-d="${d}"><span>${WD[parseD(d).getDay()]}</span><b>${parseD(d).getDate()}</b><i class="${cnt(d) ? 'dot' : ''}"></i></button>`).join('');
-  h += `</div><button class="arrow" data-action="week" data-n="7" aria-label="Próxima semana">›</button></div>`;
+  h += `<div class="seg" style="margin-top:4px"><button class="${agendaMode === 'semana' ? 'on' : ''}" data-action="agenda-mode" data-m="semana">Semana</button><button class="${agendaMode === 'mes' ? 'on' : ''}" data-action="agenda-mode" data-m="mes">Mês</button></div>`;
+  h += `<div class="carousel" id="car" aria-label="Deslize para ver ${agendaMode === 'mes' ? 'outros meses' : 'outras semanas'}">`;
+  if (agendaMode === 'mes') {
+    for (let k = -1; k <= 1; k++) h += monthPanel(sd.getFullYear(), sd.getMonth() + k, t, dot);
+  } else {
+    const ws = weekStart(selDate);
+    for (let k = -1; k <= 1; k++) h += weekPanel(addDays(ws, 7 * k), t, dot);
+  }
+  h += `</div><div class="swipe-hint">‹ deslize para ${agendaMode === 'mes' ? 'trocar de mês' : 'trocar de semana'} ›</div>`;
   h += `<div class="day-head"><h2>${selDate === t ? 'Hoje · ' : ''}${esc(longDay(selDate))}</h2>`;
   h += selDate !== t ? `<button class="link" data-action="today">Hoje</button>` : `<label class="goto">Ir para data<input type="date" data-change="goto" value="${selDate}"></label>`;
   h += `</div>`;
@@ -558,6 +607,56 @@ function viewAgenda() {
     h += `</div>`;
   }
   return h;
+}
+function weekPanel(ws, t, dot) {
+  const days = [...Array(7)].map((_, i) => addDays(ws, i));
+  return `<div class="panel"><div class="days">${days.map(d => `<button class="day ${d === selDate ? 'sel' : ''} ${d === t ? 'today' : ''}" data-action="pick-day" data-d="${d}"><span>${WD[parseD(d).getDay()]}</span><b>${parseD(d).getDate()}</b><i class="${dot(d)}"></i></button>`).join('')}</div></div>`;
+}
+function monthPanel(y, m, t, dot) {
+  const first = new Date(y, m, 1); y = first.getFullYear(); m = first.getMonth();
+  const lead = (first.getDay() + 6) % 7; const n = new Date(y, m + 1, 0).getDate();
+  let cells = '<span></span>'.repeat(lead);
+  for (let i = 1; i <= n; i++) { const d = fmtD(new Date(y, m, i)); cells += `<button class="mday ${d === selDate ? 'sel' : ''} ${d === t ? 'today' : ''}" data-action="pick-day" data-d="${d}"><b>${i}</b><i class="${dot(d)}"></i></button>`; }
+  const label = cap(first.toLocaleDateString('pt-BR', {month: 'long', year: 'numeric'}));
+  return `<div class="panel"><div class="mtitle"><b>${esc(label)}</b></div>
+    <div class="mhead">${['S', 'T', 'Q', 'Q', 'S', 'S', 'D'].map(l => `<span>${l}</span>`).join('')}</div>
+    <div class="mgrid">${cells}</div></div>`;
+}
+let carBusy = false;
+function shiftCarousel(dir) {
+  if (dir !== 1 && dir !== -1) return;
+  if (agendaMode === 'mes') {
+    const x = parseD(selDate); const nm = new Date(x.getFullYear(), x.getMonth() + dir, 1); const t = parseD(todayS());
+    selDate = (t.getFullYear() === nm.getFullYear() && t.getMonth() === nm.getMonth()) ? todayS() : fmtD(nm);
+  } else selDate = addDays(selDate, 7 * dir);
+  render(true);
+}
+function setupCarousel() {
+  const car = $('#car'); if (!car) return;
+  car.scrollLeft = car.clientWidth;
+  const settle = () => {
+    if (car._drag || carBusy || !car.isConnected || !car.clientWidth) return;
+    const i = Math.round(car.scrollLeft / car.clientWidth);
+    if ((i === 0 || i === 2)) { carBusy = true; shiftCarousel(i - 1); carBusy = false; }
+  };
+  let tm = null;
+  car.addEventListener('scroll', () => { clearTimeout(tm); tm = setTimeout(settle, 120); }, {passive: true});
+  car.addEventListener('scrollend', settle);
+  // arrastar com o mouse (computador)
+  car.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'mouse' || e.button !== 0) return;
+    car._drag = {x: e.clientX, s: car.scrollLeft, moved: false};
+    const move = ev => { const d = car._drag; if (!d) return; const dx = ev.clientX - d.x; if (Math.abs(dx) > 6) { d.moved = true; car.classList.add('dragging'); } if (d.moved) car.scrollLeft = d.s - dx; };
+    const up = () => {
+      document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up);
+      const d = car._drag; car._drag = null; if (!d || !d.moved) return;
+      car._suppressClick = true; setTimeout(() => { car._suppressClick = false; }, 60);
+      const w = car.clientWidth; const off = car.scrollLeft - w; const i = off > w * 0.18 ? 2 : off < -w * 0.18 ? 0 : 1;
+      car.classList.remove('dragging'); car.scrollTo({left: i * w, behavior: 'smooth'});
+      if (i !== 1) setTimeout(settle, 450);
+    };
+    document.addEventListener('pointermove', move); document.addEventListener('pointerup', up);
+  });
 }
 function occCard(o) {
   const s = o.s; const done = !!(s.done && s.done[o.key]); const addr = addrOf(s); const appt = isAppt(s);
@@ -676,7 +775,7 @@ function seg(path, opts, cur, cls = '') {
 
 /* ---------- formulário de serviço / compromisso ---------- */
 function initServiceForm(id, q) {
-  formStack.length = 0; showAllVisits = false;
+  formStack.length = 0; showAllVisits = false; pickSearch = '';
   const ex = id !== 'new' && services.find(s => s.id === id);
   const from = q.get('from') && services.find(s => s.id === q.get('from'));
   const base = ex || from;
@@ -708,14 +807,18 @@ function toCustom() {
 function viewServiceForm() {
   const f = form; const isEdit = !!f.id; const appt = f.kind === 'compromisso';
   setHeader(isEdit ? (appt ? 'Editar compromisso' : 'Editar serviço') : (appt ? 'Novo compromisso' : 'Novo serviço'), {back: true});
-  const opts = clients.slice().sort((a, b) => petNames(a).localeCompare(petNames(b)))
-    .map(c => `<option value="${c.id}" ${c.id === f.clientId ? 'selected' : ''}>${esc(petNames(c))} — ${esc(c.name || '')}</option>`).join('');
+  const sel = clientById(f.clientId);
+  const picker = sel
+    ? `<div class="card row picked">${thumb(sel)}<div class="grow"><div class="row-title">${esc(petNames(sel))}</div><div class="row-sub">${esc(sel.name || '')}</div></div><button type="button" class="pill" data-action="unpick-client">Trocar</button></div>`
+    : clients.length
+      ? `<input type="search" class="pick-search" placeholder="Buscar pelo nome do pet ou do tutor" data-filter="pick" value="${esc(pickSearch)}" autocomplete="off"><div class="pick-list" id="picklist">${pickList()}</div>`
+      : '<div class="muted small">Nenhum cliente cadastrado ainda.</div>';
   let h = `<div class="seg" style="margin-top:4px">
     <button type="button" class="${!appt ? 'on' : ''}" data-action="set-kind" data-val="servico">Serviço</button>
     <button type="button" class="${appt ? 'on' : ''}" data-action="set-kind" data-val="compromisso">Compromisso (sem cobrança)</button></div>`;
   if (appt) h += `<div class="field"><label>O que vai fazer</label>${seg('apptType', APPT_SHORT, f.apptType, 'wrap')}</div>`;
   h += `<div class="field"><label>${appt ? 'Cliente (se já tiver cadastro)' : 'Cliente / pet'}</label>
-    ${clients.length ? `<select data-bind="clientId" data-rerender="1"><option value="">${appt ? 'Ainda não cadastrado' : 'Selecione…'}</option>${opts}</select>` : '<div class="muted small">Nenhum cliente cadastrado ainda.</div>'}
+    ${picker}
     <button class="link" data-action="new-client-from-service">+ Cadastrar novo cliente</button></div>`;
   if (appt && !f.clientId) h += `
     <div class="field"><label>Nome do contato</label><input data-bind="contactName" autocomplete="off" value="${esc(f.contactName)}"></div>
@@ -745,6 +848,13 @@ function viewServiceForm() {
   h += `<button class="btn primary" data-action="save-service">Salvar</button>
     ${isEdit ? `<button class="btn danger" data-action="delete-service" data-sid="${f.id}">Excluir</button>` : ''}`;
   return h;
+}
+function pickList() {
+  const term = norm(pickSearch.trim());
+  let list = clients.slice().sort((a, b) => petNames(a).localeCompare(petNames(b)));
+  if (term) list = list.filter(c => norm(petNames(c) + ' ' + (c.name || '') + ' ' + (c.pets || []).map(p => p.species || '').join(' ')).includes(term));
+  if (!list.length) return `<div class="muted small" style="padding:12px">Nenhum pet encontrado${term ? ` para “${esc(pickSearch.trim())}”` : ''}.</div>`;
+  return list.slice(0, 40).map(c => `<button type="button" class="pick-row" data-action="pick-client" data-id="${c.id}">${thumb(c)}<span class="grow"><b>${esc(petNames(c))}</b><span class="muted small">${esc(c.name || '')}</span></span></button>`).join('');
 }
 function formAsService() {
   const s = {...form, price: num(form.price)};
@@ -870,12 +980,36 @@ async function saveClient(ret) {
 
 /* ---------- FINANCEIRO ---------- */
 function finRange() {
-  if (finMode === 'semana') { const a = weekStart(finAnchor); const b = addDays(a, 6); return [a, b, `${short(a)} – ${short(b)}`]; }
   const d = parseD(finAnchor); const a = fmtD(new Date(d.getFullYear(), d.getMonth(), 1)); const b = fmtD(new Date(d.getFullYear(), d.getMonth() + 1, 0));
-  return [a, b, d.toLocaleDateString('pt-BR', {month: 'long', year: 'numeric'})];
+  return [a, b, cap(d.toLocaleDateString('pt-BR', {month: 'long', year: 'numeric'}))];
+}
+function owedRows() {
+  const t = todayS(); const rows = [];
+  for (const s of services) {
+    if (isAppt(s) || s.payStatus === 'pago') continue;
+    const occ = occurrences(s); const past = occ.filter(o => o.date <= t); if (!past.length) continue;
+    rows.push({s, n: past.length, total: occ.length, v: past.length * perVisit(s)});
+  }
+  return rows.sort((x, y) => x.s.start.localeCompare(y.s.start));
 }
 function viewFinance() {
   setHeader('Financeiro', {right: `<a class="hdr-btn gear" href="#ajustes" aria-label="Ajustes">${GEAR}<i id="sync-dot"></i></a>`});
+  // 1) em evidência: já realizados e não pagos (todos os períodos)
+  const owed = owedRows(); const owedTotal = owed.reduce((a, r) => a + r.v, 0);
+  let h = '';
+  if (owed.length) {
+    h += `<div class="owed"><div class="label">A receber · já realizados</div><div class="total">${money(owedTotal)}</div>
+      <div class="muted small">${owed.length} ${owed.length === 1 ? 'serviço realizado ainda não pago' : 'serviços realizados ainda não pagos'} · todos os períodos</div>`;
+    h += owed.map(({s, n, total, v}) => `<a class="owed-row" href="#servico/${s.id}">${thumbOf(s)}
+      <div class="grow"><div class="row-title">${esc(titleOf(s))}</div>
+        <div class="row-sub">${n === total ? `${total} ${total === 1 ? 'visita realizada' : 'visitas realizadas'}` : `${n} de ${total} visitas realizadas`} · ${periodText(s)}</div>
+        <button class="chip ${s.payStatus}" style="margin-top:5px" data-action="cycle-pay" data-sid="${s.id}">${PAY[s.payStatus]} ↻</button></div>
+      <div class="right"><div style="font-weight:700">${money(v)}</div><button class="pay-btn" data-action="set-pay" data-val="pago" data-sid="${s.id}">Recebi ✓</button></div></a>`).join('');
+    h += `</div>`;
+  } else {
+    h += `<div class="card allgood">✓ Tudo em dia — nenhum serviço realizado aguardando pagamento.</div>`;
+  }
+  // 2) resumo do mês
   const [a, b, label] = finRange();
   const tot = {pendente: 0, cobrado: 0, pago: 0}; const rows = []; let visits = 0, doneV = 0;
   for (const s of services) {
@@ -887,9 +1021,8 @@ function viewFinance() {
   rows.sort((x, y) => x.first.localeCompare(y.first));
   const total = tot.pendente + tot.cobrado + tot.pago;
   const pct = k => total ? (tot[k] / total * 100).toFixed(1) : 0;
-  let openAll = 0; services.forEach(s => { if (!isAppt(s) && s.payStatus !== 'pago') openAll += totalOf(s); });
-  let h = `<div class="seg" style="margin-top:4px"><button class="${finMode === 'semana' ? 'on' : ''}" data-action="fin-mode" data-m="semana">Semana</button><button class="${finMode === 'mes' ? 'on' : ''}" data-action="fin-mode" data-m="mes">Mês</button></div>
-  <div class="fin-nav"><button class="arrow" data-action="fin-nav" data-n="-1">‹</button><b>${esc(label)}</b><button class="arrow" data-action="fin-nav" data-n="1">›</button></div>
+  h += `<div class="sec">Resumo do mês</div>
+  <div class="fin-nav" style="margin-top:0"><button class="arrow" data-action="fin-nav" data-n="-1" aria-label="Mês anterior">‹</button><b>${esc(label)}</b><button class="arrow" data-action="fin-nav" data-n="1" aria-label="Próximo mês">›</button></div>
   <div class="card"><div class="label">Total no período</div><div class="total">${money(total)}</div>
     <div class="muted small">${visits} ${visits === 1 ? 'visita' : 'visitas'} · ${doneV} ${doneV === 1 ? 'feita' : 'feitas'}</div>
     <div class="bar"><i style="width:${pct('pago')}%;background:var(--accent)"></i><i style="width:${pct('cobrado')}%;background:var(--warn)"></i><i style="width:${pct('pendente')}%;background:var(--danger)"></i></div>
@@ -897,15 +1030,15 @@ function viewFinance() {
       <div class="stat pago"><small>Recebido</small><b>${money(tot.pago)}</b></div>
       <div class="stat cobrado"><small>Cobrado</small><b>${money(tot.cobrado)}</b></div>
       <div class="stat pendente"><small>Não cobrado</small><b>${money(tot.pendente)}</b></div></div></div>`;
-  if (openAll) h += `<div class="card row"><div class="grow"><div class="row-title">Total em aberto</div><div class="row-sub">Todos os períodos</div></div><b>${money(openAll)}</b></div>`;
-  h += paidChart();
-  h += `<div class="sec">Serviços no período</div>`;
+  h += `<div class="sec">Serviços no mês</div>`;
   h += rows.length ? rows.map(({s, n, v}) => { const c = clientById(s.clientId) || {};
     return `<a class="card row" href="#servico/${s.id}">${thumb(c)}<div class="grow"><div class="row-title">${esc(petNames(c))}</div>
-      <div class="row-sub">${n} ${n === 1 ? 'visita' : 'visitas'} no período · ${periodText(s)}</div></div>
+      <div class="row-sub">${n} ${n === 1 ? 'visita' : 'visitas'} no mês · ${periodText(s)}</div></div>
       <div class="right"><div style="font-weight:700">${money(v)}</div><button class="chip ${s.payStatus}" data-action="cycle-pay" data-sid="${s.id}">${PAY[s.payStatus]} ↻</button></div></a>`; }).join('')
-    : `<div class="empty"><div class="big">💸</div>Nenhum serviço neste período.</div>`;
-  h += `<p class="muted small" style="text-align:center">Toque no status para alternar: Não cobrado → Cobrado → Pago.<br>Serviços de valor total são divididos igualmente entre as visitas.<br>Compromissos (conhecer cliente, chave) não entram no financeiro.</p>`;
+    : `<div class="empty" style="padding:24px"><div class="big">💸</div>Nenhum serviço neste mês.</div>`;
+  // 3) por último: gráfico
+  h += paidChart();
+  h += `<p class="muted small" style="text-align:center">Toque no status para alternar: Não cobrado → Cobrado → Pago.<br>"A receber" considera visitas até hoje de serviços não pagos.<br>Serviços de valor total são divididos igualmente entre as visitas.<br>Compromissos (conhecer cliente, chave) não entram no financeiro.</p>`;
   return h;
 }
 
@@ -1006,12 +1139,15 @@ async function importData(file) {
 /* ---------- eventos ---------- */
 document.addEventListener('click', async e => {
   const el = e.target.closest('[data-action]'); if (!el) return;
+  const car = $('#car'); if (car && car._suppressClick && car.contains(el)) { e.preventDefault(); return; }
   e.preventDefault(); e.stopPropagation();
   const d = el.dataset; const sv = d.sid && services.find(s => s.id === d.sid);
   switch (d.action) {
     case 'back': if (history.length > 1) history.back(); else location.hash = '#agenda'; break;
     case 'pick-day': selDate = d.d; if (parseHash().route !== 'agenda') location.hash = '#agenda'; else render(true); break;
-    case 'week': selDate = addDays(selDate, +d.n); render(true); break;
+    case 'pick-client': form.clientId = d.id; pickSearch = ''; render(true); break;
+    case 'unpick-client': form.clientId = ''; render(true); setTimeout(() => { const s = $('.pick-search'); if (s) s.focus(); }, 30); break;
+    case 'agenda-mode': agendaMode = d.m; try { localStorage.setItem('agendaMode', d.m); } catch (err) {} render(true); break;
     case 'today': selDate = todayS(); render(true); break;
     case 'toggle-done': if (sv) { sv.done = sv.done || {}; if (sv.done[d.key]) delete sv.done[d.key]; else sv.done[d.key] = true; await saveRec('services', sv); render(true); } break;
     case 'toggle-check': if (sv) { sv.checks = sv.checks || {}; const arr = sv.checks[d.key] || []; const i = +d.i; sv.checks[d.key] = arr.includes(i) ? arr.filter(x => x !== i) : [...arr, i]; await saveRec('services', sv); render(true); } break;
@@ -1021,8 +1157,7 @@ document.addEventListener('click', async e => {
     case 'reveal': el.textContent = d.code; break;
     case 'zoom': { const u = await photoURL(d.id); if (u) { $('#lightbox img').src = u; $('#lightbox').hidden = false; } break; }
     case 'svc-filter': svcFilter = d.f; render(true); break;
-    case 'fin-mode': finMode = d.m; render(true); break;
-    case 'fin-nav': { const n = +d.n; if (finMode === 'semana') finAnchor = addDays(finAnchor, 7 * n); else { const x = parseD(finAnchor); finAnchor = fmtD(new Date(x.getFullYear(), x.getMonth() + n, 1)); } chartYear = parseD(finAnchor).getFullYear(); render(true); break; }
+    case 'fin-nav': { const n = +d.n; const x = parseD(finAnchor); finAnchor = fmtD(new Date(x.getFullYear(), x.getMonth() + n, 1)); chartYear = parseD(finAnchor).getFullYear(); render(true); break; }
     // formulários
     case 'set':
       if (d.path === 'mode') {
@@ -1035,7 +1170,7 @@ document.addEventListener('click', async e => {
     case 'add-visit': { const last = form.visits[form.visits.length - 1]; form.visits.push({date: last ? last.date : todayS(), time: ''}); render(true); break; }
     case 'remove-visit': form.visits.splice(+d.i, 1); if (!form.visits.length) form.visits.push({date: todayS(), time: ''}); render(true); break;
     case 'year-nav': chartYear += +d.n; render(true); break;
-    case 'fin-month': finMode = 'mes'; finAnchor = fmtD(new Date(chartYear, +d.m, 1)); render(true); window.scrollTo({top: 0, behavior: 'smooth'}); break;
+    case 'fin-month': finAnchor = fmtD(new Date(chartYear, +d.m, 1)); render(true); { const sec = [...document.querySelectorAll('.sec')].find(x => x.textContent === 'Resumo do mês'); if (sec) sec.scrollIntoView({behavior: 'smooth'}); } break;
     case 'toggle-wd': { const i = +d.i; form.weekdays = form.weekdays.includes(i) ? form.weekdays.filter(x => x !== i) : [...form.weekdays, i].sort(); render(true); break; }
     case 'add-time': form.times.push(''); render(true); break;
     case 'remove-time': form.times.splice(+d.i, 1); if (!form.times.length) form.times.push(''); render(true); break;
@@ -1070,6 +1205,7 @@ document.addEventListener('input', e => {
     if (el.dataset.live) updateLive();
   }
   if (el.dataset.filter === 'svc') { svcSearch = el.value; $('#list').innerHTML = servicesList(); hydratePhotos(); }
+  if (el.dataset.filter === 'pick') { pickSearch = el.value; const pl = $('#picklist'); if (pl) { pl.innerHTML = pickList(); hydratePhotos(); } }
   if (el.dataset.filter === 'cli') { cliSearch = el.value; $('#list').innerHTML = clientsList(); hydratePhotos(); }
 });
 document.addEventListener('change', e => {

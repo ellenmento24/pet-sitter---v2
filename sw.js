@@ -1,6 +1,6 @@
 // Guarda o app no aparelho para abrir mesmo sem internet.
 // Ao publicar uma nova versão do index.html, aumente o número abaixo.
-const VERSION = 'patinhas-v4';
+const VERSION = 'patinhas-v5';
 const FILES = ['./', './index.html', './manifest.json', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
