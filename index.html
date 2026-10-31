@@ -1,0 +1,1111 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Patinhas</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Patinhas">
+<meta name="theme-color" content="#f7f3ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#151311" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+:root{
+  --bg:#f7f3ee;--card:#fff;--ink:#2b2622;--muted:#8a8078;--line:#ece4da;
+  --accent:#2f7d6d;--accent-soft:#e3f1ec;--warn:#b5741f;--warn-soft:#fbefdc;
+  --danger:#c4513f;--danger-soft:#fbe7e3;--chip:#f1ebe3;
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#151311;--card:#211e1b;--ink:#f1ebe4;--muted:#a1968c;--line:#332e29;
+    --accent:#5bbfa8;--accent-soft:#1d3530;--warn:#e0a35a;--warn-soft:#3a2d1c;
+    --danger:#e17a68;--danger-soft:#3b211d;--chip:#2c2824;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
+body{min-height:100vh;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+a{color:var(--accent)}
+button{font:inherit;color:inherit;cursor:pointer}
+.hdr{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:6px;
+  padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;
+  background:var(--bg);background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.hdr h1{flex:1;margin:0;font-size:26px;font-weight:750;letter-spacing:-.02em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr.sub h1{font-size:19px;font-weight:650}
+.hdr-btn{border:0;background:none;color:var(--accent);font-size:17px;font-weight:600;
+  padding:6px 4px;text-decoration:none;display:inline-flex;align-items:center}
+.hdr-btn svg{width:24px;height:24px}
+#hdr-back[hidden]{display:none}
+#hdr-back{font-size:30px;line-height:1;padding:0 8px 4px 0}
+main{padding:2px 16px 24px;max-width:680px;margin:0 auto}
+.tabs{position:fixed;bottom:0;left:0;right:0;z-index:20;display:flex;
+  background:var(--card);background:color-mix(in srgb,var(--card) 92%,transparent);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+.tabs a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;
+  color:var(--muted);text-decoration:none;padding:4px 0;font-weight:500}
+.tabs svg{width:25px;height:25px}
+.tabs a.on{color:var(--accent)}
+.fab{position:fixed;right:18px;bottom:calc(86px + env(safe-area-inset-bottom));width:58px;height:58px;
+  border-radius:50%;background:var(--accent);color:#fff;font-size:32px;font-weight:300;
+  display:grid;place-items:center;text-decoration:none;box-shadow:0 8px 22px rgba(0,0,0,.2);z-index:15}
+.fab[hidden]{display:none}
+.card{background:var(--card);border-radius:18px;padding:14px;margin:10px 0;border:1px solid var(--line)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.sec{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:650;margin:22px 4px 6px}
+.label{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:650;margin-bottom:4px}
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty .big{font-size:40px;margin-bottom:6px}
+.pre{white-space:pre-wrap;word-wrap:break-word}
+
+/* week strip */
+.week{display:flex;align-items:center;gap:4px;margin:4px -6px 0}
+.days{flex:1;display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.day{border:0;background:none;border-radius:14px;padding:6px 0 7px;display:flex;flex-direction:column;align-items:center;gap:1px}
+.day span{font-size:11px;color:var(--muted);font-weight:600}
+.day b{font-size:18px;font-weight:650;width:34px;height:34px;display:grid;place-items:center;border-radius:50%}
+.day.today b{color:var(--accent)}
+.day.sel b{background:var(--accent);color:#fff}
+.day i{width:5px;height:5px;border-radius:50%;background:transparent}
+.day i.dot{background:var(--accent)}
+.arrow{border:0;background:none;color:var(--muted);font-size:26px;padding:4px 6px}
+.day-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 2px 2px}
+.day-head h2{margin:0;font-size:18px;font-weight:700;letter-spacing:-.01em}
+.goto{position:relative;color:var(--accent);font-weight:600;font-size:15px;white-space:nowrap}
+.goto input{position:absolute;inset:0;opacity:0;width:100%}
+.link{border:0;background:none;color:var(--accent);font-weight:600;padding:8px 0;font-size:15px}
+
+/* occurrence cards */
+.occ{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit}
+.occ-time{font-weight:750;font-size:17px;min-width:50px;font-variant-numeric:tabular-nums}
+.occ-body{flex:1;min-width:0}
+.occ-title{font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.occ-sub,.occ-addr{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.occ.done .occ-title,.occ.done .occ-time{opacity:.45;text-decoration:line-through}
+.check{flex:none;width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:none;
+  display:grid;place-items:center;color:transparent;font-size:17px;font-weight:700}
+.check.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.thumb{flex:none;width:46px;height:46px;border-radius:50%;object-fit:cover;background:var(--chip);
+  display:grid;place-items:center;font-size:22px}
+.thumb.lg{width:64px;height:64px;font-size:30px}
+
+/* list rows */
+.row{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit}
+.row .grow{flex:1;min-width:0}
+.row-title{font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-sub{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.right{text-align:right;flex:none}
+.chev{color:var(--muted);font-size:20px}
+
+.chip{display:inline-block;font-size:12px;font-weight:650;padding:3px 9px;border-radius:999px;background:var(--chip);color:var(--muted);white-space:nowrap;border:0}
+.chip.pendente{background:var(--danger-soft);color:var(--danger)}
+.chip.cobrado{background:var(--warn-soft);color:var(--warn)}
+.chip.pago{background:var(--accent-soft);color:var(--accent)}
+.chip.type{background:var(--chip);color:var(--ink)}
+
+/* segmented */
+.seg{display:flex;background:var(--chip);border-radius:12px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:none;border-radius:9px;padding:8px 4px;font-size:14px;font-weight:600;color:var(--muted)}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.seg.pay button.on.pendente{color:var(--danger)}
+.seg.pay button.on.cobrado{color:var(--warn)}
+.seg.pay button.on.pago{color:var(--accent)}
+
+/* forms */
+.field{margin:14px 0}
+.field>label{display:block;font-size:13px;font-weight:650;color:var(--muted);margin:0 2px 6px}
+input:not([type=file]),select,textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--card);
+  border:1px solid var(--line);border-radius:12px;padding:12px;outline:none;-webkit-appearance:none;appearance:none}
+input[type=date],input[type=time]{min-height:46px}
+textarea{resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+.mt{margin-top:8px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row2 .field{margin:0}
+.wds{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.wd{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:10px 0;font-weight:650;color:var(--muted)}
+.wd.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.time-row{display:flex;gap:8px;margin-bottom:8px}
+.icon-btn{border:0;background:var(--chip);color:var(--muted);border-radius:12px;width:46px;flex:none;font-size:16px}
+.live{background:var(--accent-soft);color:var(--accent);border-radius:12px;padding:10px 12px;font-weight:600;font-size:14px}
+.btn{display:block;width:100%;border:0;border-radius:14px;padding:15px;font-weight:650;font-size:16px;margin-top:10px;text-align:center;text-decoration:none}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.ghost{background:var(--chip);color:var(--ink)}
+.btn.danger{background:none;color:var(--danger)}
+.btns{display:flex;gap:8px}
+.btns .btn{flex:1}
+
+/* photos */
+.photo-slot{position:relative;border:0;padding:0;overflow:hidden;background:var(--chip);color:var(--muted);flex:none}
+.photo-slot.round{width:76px;height:76px;border-radius:50%}
+.photo-slot.wide{width:100%;height:180px;border-radius:14px}
+.photo-slot img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-slot.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:24px}
+.photo-slot.empty span{font-size:11px;font-weight:600}
+.ph-x{position:absolute;top:6px;right:6px;border:0;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:12px}
+.photo-slot.round .ph-x{top:0;right:0}
+.ph-change{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);border:0;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;padding:4px 10px}
+.photo-slot.round .ph-change{bottom:4px;padding:2px 8px;font-size:10px}
+.pet-edit{display:flex;gap:12px;align-items:center}
+.pet-edit .grow{flex:1;min-width:0}
+
+/* detail */
+.pets{display:flex;gap:14px;overflow-x:auto;padding:4px 2px 2px}
+.pet{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:84px;text-align:center;border:0;background:none;padding:0}
+.pet img,.pet .ph{width:84px;height:84px;border-radius:50%;object-fit:cover;background:var(--chip);display:grid;place-items:center;font-size:34px}
+.pet b{font-size:15px}
+.pet span{font-size:12px;color:var(--muted)}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.kv:last-child{border-bottom:0}
+.kv span:first-child{color:var(--muted)}
+.kv span:last-child{text-align:right;font-weight:600}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.pill{border:0;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:650;font-size:14px;padding:8px 14px;text-decoration:none}
+.keyimg{width:100%;max-height:240px;object-fit:cover;border-radius:14px;display:block;border:0;padding:0;background:var(--chip)}
+.code{font:600 22px/1.2 ui-monospace,Menlo,monospace;letter-spacing:.12em;border:0;background:var(--chip);border-radius:12px;padding:10px 14px;width:100%;text-align:left}
+.visit-card{border:2px solid var(--accent)}
+.visit-when{font-size:19px;font-weight:700;margin-bottom:6px}
+.cl{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;padding:9px 0;text-align:left;border-bottom:1px solid var(--line)}
+.cl .check{width:28px;height:28px;font-size:14px}
+.vrow{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.vrow:last-child{border-bottom:0}
+.vrow .grow{flex:1}
+.vrow.past .grow{color:var(--muted)}
+.vrow .check{width:30px;height:30px;font-size:14px}
+
+/* finance */
+.fin-nav{display:flex;align-items:center;justify-content:space-between;margin:12px 0 4px}
+.fin-nav b{font-size:17px;text-transform:capitalize}
+.total{font-size:34px;font-weight:750;letter-spacing:-.02em}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{border-radius:14px;padding:10px;background:var(--chip)}
+.stat b{display:block;font-size:15px;margin-top:2px}
+.stat.pago{background:var(--accent-soft);color:var(--accent)}
+.stat.cobrado{background:var(--warn-soft);color:var(--warn)}
+.stat.pendente{background:var(--danger-soft);color:var(--danger)}
+.stat small{font-size:10.5px;font-weight:650;text-transform:uppercase;letter-spacing:0;white-space:nowrap}
+.bar{display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--chip);margin:12px 0 4px}
+.bar i{display:block;height:100%}
+
+.search{margin:6px 0 4px}
+#lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:100;display:flex;align-items:center;justify-content:center;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+#lightbox[hidden]{display:none}
+#lightbox img{max-width:100%;max-height:100%;object-fit:contain}
+#toast{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:600;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:90}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+:root{--bar:#16876d}
+@media (prefers-color-scheme: dark){:root{--bar:#3aa58b}}
+.card.appt{border-style:dashed;border-color:var(--warn)}
+.thumb.icon{background:var(--warn-soft)}
+.chip.appt{background:var(--warn-soft);color:var(--warn)}
+.seg.wrap button{font-size:13px;line-height:1.2}
+.visit-edit{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr) 46px;gap:8px;margin-bottom:8px}
+.chart-head{display:flex;align-items:center;justify-content:space-between}
+.chart-head .yr{display:flex;align-items:center;gap:2px}
+.chart{display:grid;grid-template-columns:repeat(12,1fr);gap:2px;height:160px;align-items:end;border-bottom:1px solid var(--line);margin-top:10px}
+.col{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;border:0;background:none;padding:0}
+.col i{display:block;width:72%;max-width:26px;background:var(--bar);border-radius:4px 4px 0 0}
+.col .val{font-size:10px;font-weight:700;color:var(--ink);margin-bottom:3px;white-space:nowrap}
+.months{display:grid;grid-template-columns:repeat(12,1fr);gap:2px;margin-top:5px}
+.months span{text-align:center;font-size:10.5px;color:var(--muted)}
+.months span.sel{color:var(--ink);font-weight:700}
+.chart-info{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:12px;font-size:14px}
+.chart-empty{text-align:center;color:var(--muted);font-size:13px;padding:8px 0 0}
+
+.gear{position:relative}
+#sync-dot{position:absolute;top:3px;right:0;width:9px;height:9px;border-radius:50%;border:2px solid var(--bg);display:none}
+#sync-dot.ok{display:block;background:var(--accent)}
+#sync-dot.busy{display:block;background:var(--warn)}
+#sync-dot.err{display:block;background:var(--danger)}
+.banner{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;background:var(--warn-soft);border-color:transparent}
+.banner b{color:var(--warn)}
+.sync-status{font-size:14px;margin:8px 0 2px}
+.sync-status.err{color:var(--danger);font-weight:600}
+</style>
+</head>
+<body>
+<header class="hdr" id="hdr">
+  <button id="hdr-back" class="hdr-btn" data-action="back" hidden aria-label="Voltar">‹</button>
+  <h1 id="hdr-title">Agenda</h1>
+  <div id="hdr-right"></div>
+</header>
+<main id="view"></main>
+<a id="fab" class="fab" href="#servico-editar/new" aria-label="Novo">+</a>
+<nav class="tabs">
+  <a href="#agenda" data-tab="agenda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Agenda</span></a>
+  <a href="#servicos" data-tab="servicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3"/></svg><span>Serviços</span></a>
+  <a href="#clientes" data-tab="clientes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="10" r="1.8"/><circle cx="10" cy="6" r="1.8"/><circle cx="14.5" cy="6" r="1.8"/><circle cx="18" cy="10" r="1.8"/><path d="M12.2 12c-2.6 0-5.5 3.6-5.5 6.2 0 1.6 1.2 2.3 2.6 2.3 1.3 0 1.9-.6 2.9-.6s1.6.6 2.9.6c1.4 0 2.6-.7 2.6-2.3 0-2.6-2.9-6.2-5.5-6.2z"/></svg><span>Clientes</span></a>
+  <a href="#financeiro" data-tab="financeiro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M15.5 15h2.5"/></svg><span>Financeiro</span></a>
+</nav>
+<input type="file" id="filepick" accept="image/*" hidden>
+<input type="file" id="importpick" accept="application/json,.json" hidden>
+<div id="lightbox" hidden><img alt=""></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* ---------- utilidades ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const BRL = new Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'});
+const money = v => BRL.format(v || 0);
+const pad = n => String(n).padStart(2, '0');
+const fmtD = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseD = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const todayS = () => fmtD(new Date());
+const addDays = (s, n) => { const d = parseD(s); d.setDate(d.getDate() + n); return fmtD(d); };
+const short = s => { const d = parseD(s); return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}`; };
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const longDay = s => cap(parseD(s).toLocaleDateString('pt-BR', {weekday: 'long', day: 'numeric', month: 'long'}));
+const weekStart = s => { const d = parseD(s); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return fmtD(d); };
+const num = v => { let s = String(v ?? '').replace(/[^\d.,]/g, ''); if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.'); const n = parseFloat(s); return isNaN(n) ? 0 : n; };
+const WD = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+const WDN = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+const TYPES = {visita: 'Visita', passeio: 'Passeio', ambos: 'Visita + passeio'};
+const PAY = {pendente: 'Não cobrado', cobrado: 'Cobrado', pago: 'Pago'};
+const APPT = {conhecer: 'Conhecer cliente', chave: 'Buscar chave', devolver: 'Devolver chave', outro: 'Compromisso'};
+const APPT_SHORT = {conhecer: 'Conhecer cliente', chave: 'Buscar chave', devolver: 'Devolver chave', outro: 'Outro'};
+const APPT_ICON = {conhecer: '🤝', chave: '🔑', devolver: '🔑', outro: '📌'};
+const MN = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+const isAppt = s => s.kind === 'compromisso';
+const GEAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v2.6M12 18.9v2.6M4.6 4.6l1.9 1.9M17.5 17.5l1.9 1.9M2.5 12h2.6M18.9 12h2.6M4.6 19.4l1.9-1.9M17.5 6.5l1.9-1.9"/></svg>';
+
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 1600); }
+function setPath(o, path, v) { const ks = path.split('.'); for (let i = 0; i < ks.length - 1; i++) o = o[ks[i]]; o[ks[ks.length - 1]] = v; }
+function getPath(o, path) { return path.split('.').reduce((a, k) => a == null ? a : a[k], o); }
+
+/* ---------- banco de dados (IndexedDB, só no aparelho) ---------- */
+let db;
+function openDB() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('patinhas', 2);
+    r.onupgradeneeded = () => { ['clients', 'services', 'photos', 'meta', 'outbox'].forEach(n => { if (!r.result.objectStoreNames.contains(n)) r.result.createObjectStore(n, {keyPath: 'id'}); }); };
+    r.onsuccess = () => { db = r.result; res(db); };
+    r.onerror = () => rej(r.error);
+  });
+}
+function req(store, mode, fn) {
+  return new Promise((res, rej) => {
+    const t = db.transaction(store, mode); const r = fn(t.objectStore(store));
+    t.oncomplete = () => res(r ? r.result : undefined); t.onerror = t.onabort = () => rej(t.error);
+  });
+}
+const dbAll = s => req(s, 'readonly', st => st.getAll());
+const dbGet = (s, id) => req(s, 'readonly', st => st.get(id));
+const dbPut = (s, v) => req(s, 'readwrite', st => st.put(v));
+const dbDel = (s, id) => req(s, 'readwrite', st => st.delete(id));
+const dbClear = s => req(s, 'readwrite', st => st.clear());
+
+/* ---------- sincronização com o Netlify ---------- */
+let syncKey = null, lastRev = 0, syncTimer = null;
+const syncState = {busy: false, last: null, error: null};
+const metaGet = async k => { const r = await dbGet('meta', k); return r ? r.v : undefined; };
+const metaSet = (k, v) => dbPut('meta', {id: k, v});
+async function saveRec(col, rec) {
+  rec.updatedAt = Date.now();
+  await dbPut(col, rec);
+  await dbPut('outbox', {id: col + '/' + rec.id, col, rid: rec.id, t: Date.now() + Math.random()});
+  scheduleSync();
+}
+async function removeRec(col, id) {
+  await dbDel(col, id);
+  await dbPut('outbox', {id: col + '/' + id, col, rid: id, deleted: true, updatedAt: Date.now(), t: Date.now() + Math.random()});
+  scheduleSync();
+}
+async function queuePhoto(id, op) { await dbPut('outbox', {id: 'photo/' + id, col: 'photo', rid: id, op, t: Date.now() + Math.random()}); scheduleSync(); }
+function scheduleSync(ms = 1200) { if (!syncKey) return; clearTimeout(syncTimer); syncTimer = setTimeout(sync, ms); }
+async function api(path, opts = {}) {
+  const r = await fetch('/api/' + path, {...opts, headers: {'x-patinhas-key': syncKey || '', ...(opts.headers || {})}});
+  if (!r.ok) { let msg = 'Erro ' + r.status; try { const j = await r.json(); if (j.error) msg = j.error; } catch (e) {} const err = new Error(msg); err.status = r.status; throw err; }
+  return r;
+}
+function syncLabel() {
+  if (!syncKey) return 'Desligada';
+  if (syncState.busy) return 'Sincronizando…';
+  if (syncState.error) return '⚠️ ' + syncState.error;
+  if (syncState.last) return 'Sincronizado às ' + new Date(syncState.last).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+  return 'Aguardando…';
+}
+function updateSyncUI() {
+  const dot = $('#sync-dot');
+  if (dot) dot.className = !syncKey ? '' : syncState.busy ? 'busy' : syncState.error ? 'err' : 'ok';
+  const st = $('#sync-status');
+  if (st) { st.textContent = syncLabel(); st.classList.toggle('err', !!(syncKey && syncState.error)); }
+}
+async function sync() {
+  if (!syncKey || syncState.busy) return;
+  if (!navigator.onLine) { syncState.error = 'Sem internet — envia quando voltar'; updateSyncUI(); return; }
+  syncState.busy = true; updateSyncUI();
+  let again = false;
+  try {
+    const out = await dbAll('outbox');
+    for (const o of out.filter(o => o.col === 'photo')) {
+      if (o.op === 'del') { try { await api('photo/' + o.rid, {method: 'DELETE'}); } catch (e) { if (e.status !== 404) throw e; } }
+      else { const p = await dbGet('photos', o.rid); if (p) await api('photo/' + o.rid, {method: 'PUT', body: p.blob, headers: {'content-type': 'image/jpeg'}}); }
+      const cur = await dbGet('outbox', o.id); if (cur && cur.t === o.t) await dbDel('outbox', o.id);
+    }
+    const recs = out.filter(o => o.col !== 'photo'); const changes = [];
+    for (const o of recs) {
+      const data = o.deleted ? null : await dbGet(o.col, o.rid);
+      if (data) changes.push({col: o.col, id: o.rid, updatedAt: data.updatedAt || Date.now(), data});
+      else changes.push({col: o.col, id: o.rid, updatedAt: o.updatedAt || Date.now(), deleted: true});
+    }
+    const r = await (await api('sync', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify({changes, sinceRev: lastRev})})).json();
+    for (const o of recs) { const cur = await dbGet('outbox', o.id); if (cur && cur.t === o.t) await dbDel('outbox', o.id); else again = true; }
+    let changed = false;
+    for (const rec of r.records) {
+      if (rec.col !== 'clients' && rec.col !== 'services') continue;
+      const arr = rec.col === 'clients' ? clients : services;
+      const local = arr.find(x => x.id === rec.id);
+      if (local && (local.updatedAt || 0) > (rec.updatedAt || 0)) continue;
+      if (rec.deleted) {
+        if (local) { await dbDel(rec.col, rec.id); if (rec.col === 'clients') clients = clients.filter(x => x.id !== rec.id); else services = services.filter(x => x.id !== rec.id); changed = true; }
+      } else if (!local || JSON.stringify(local) !== JSON.stringify(rec.data)) {
+        await dbPut(rec.col, rec.data);
+        const i = arr.findIndex(x => x.id === rec.id); if (i >= 0) arr[i] = rec.data; else arr.push(rec.data);
+        changed = true;
+      }
+    }
+    lastRev = r.rev; await metaSet('lastRev', lastRev);
+    syncState.last = Date.now(); syncState.error = null;
+    if (changed) { const {route} = parseHash(); if (!route.endsWith('-editar')) render(true); }
+  } catch (e) {
+    syncState.error = e.status === 401 ? 'Senha incorreta — conecte de novo em Ajustes' : (e.message || 'Falha na sincronização');
+  } finally { syncState.busy = false; updateSyncUI(); if (again) scheduleSync(300); }
+}
+async function connectSync(key) {
+  key = (key || '').trim(); if (!key) return alert('Digite a senha.');
+  const prev = syncKey; syncKey = key;
+  try { await api('ping'); }
+  catch (e) { syncKey = prev; return alert(e.status === 401 ? 'Senha incorreta.' : e.status === 404 ? 'O site ainda não tem a parte de sincronização publicada.' : 'Não foi possível conectar: ' + e.message); }
+  await metaSet('syncKey', key); lastRev = 0; await metaSet('lastRev', 0);
+  const t = Date.now();
+  for (const c of clients) { if (!c.updatedAt) { c.updatedAt = t; await dbPut('clients', c); } await dbPut('outbox', {id: 'clients/' + c.id, col: 'clients', rid: c.id, t: t + Math.random()}); }
+  for (const s of services) { if (!s.updatedAt) { s.updatedAt = t; await dbPut('services', s); } await dbPut('outbox', {id: 'services/' + s.id, col: 'services', rid: s.id, t: t + Math.random()}); }
+  for (const k of await req('photos', 'readonly', st => st.getAllKeys())) await dbPut('outbox', {id: 'photo/' + k, col: 'photo', rid: k, op: 'put', t: t + Math.random()});
+  toast('Conectado'); render(true); await sync(); render(true);
+}
+async function disconnectSync() {
+  if (!confirm('Desconectar este aparelho? Os dados continuam aqui, mas param de sincronizar.')) return;
+  syncKey = null; await metaSet('syncKey', null); await dbClear('outbox'); syncState.error = null; render(true);
+}
+
+let clients = [], services = [];
+const clientById = id => clients.find(c => c.id === id);
+function titleOf(s) { return isAppt(s) ? (APPT[s.apptType] || 'Compromisso') : petNames(clientById(s.clientId)); }
+function whoOf(s) { const c = clientById(s.clientId); if (c) return isAppt(s) ? petNames(c) + (c.name ? ' · ' + c.name : '') : (c.name || ''); return s.contactName || ''; }
+function addrOf(s) { const c = clientById(s.clientId); return (c && c.address) || s.contactAddress || ''; }
+function thumbOf(s) { return isAppt(s) ? `<div class="thumb icon">${APPT_ICON[s.apptType] || '📌'}</div>` : thumb(clientById(s.clientId)); }
+const petNames = c => (c && (c.pets || []).map(p => p.name).filter(Boolean).join(', ')) || (c && c.name) || 'Sem nome';
+
+/* ---------- fotos ---------- */
+const photoCache = new Map(); const photoPending = new Map();
+async function photoURL(id) {
+  if (!id) return null;
+  if (photoCache.has(id)) return photoCache.get(id);
+  let rec = await dbGet('photos', id);
+  if (!rec && syncKey) {
+    if (!photoPending.has(id)) photoPending.set(id, (async () => {
+      try { const blob = await (await api('photo/' + id)).blob(); const r = {id, blob}; await dbPut('photos', r); return r; } catch (e) { return null; } finally { photoPending.delete(id); }
+    })());
+    rec = await photoPending.get(id);
+  }
+  if (!rec) return null;
+  const u = URL.createObjectURL(rec.blob); photoCache.set(id, u); return u;
+}
+function hydratePhotos() {
+  document.querySelectorAll('img[data-photo]').forEach(async img => {
+    const u = await photoURL(img.dataset.photo); if (u) img.src = u;
+  });
+}
+async function compressImage(file, max = 1400) {
+  const url = URL.createObjectURL(file);
+  const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+  const r = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * r); c.height = Math.round(img.naturalHeight * r);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  URL.revokeObjectURL(url);
+  return await new Promise(res => c.toBlob(res, 'image/jpeg', 0.82));
+}
+async function deletePhoto(id) { if (!id) return; await dbDel('photos', id); queuePhoto(id, 'del'); const u = photoCache.get(id); if (u) URL.revokeObjectURL(u); photoCache.delete(id); }
+function thumb(c, cls = '') {
+  const p = c && (c.pets || []).find(p => p.photo);
+  return p ? `<img class="thumb ${cls}" data-photo="${p.photo}" alt="">` : `<div class="thumb ${cls}">🐾</div>`;
+}
+async function cleanupPhotos() {
+  const used = new Set();
+  clients.forEach(c => { (c.pets || []).forEach(p => p.photo && used.add(p.photo)); c.keyPhoto && used.add(c.keyPhoto); });
+  const keys = await req('photos', 'readonly', st => st.getAllKeys());
+  for (const k of keys) if (!used.has(k)) await dbDel('photos', k);
+}
+
+/* ---------- visitas (ocorrências) ---------- */
+function occurrences(s) {
+  const out = [];
+  if (s.mode === 'personalizado') {
+    (s.visits || []).filter(v => v.date).forEach(v => out.push({date: v.date, time: v.time || '', key: v.date + ' ' + (v.time || ''), s}));
+    return out.sort((a, b) => a.key.localeCompare(b.key));
+  }
+  if (!s.start) return out;
+  const e = parseD(s.end || s.start); const d = parseD(s.start);
+  const times = (s.times || []).filter(Boolean).slice().sort();
+  const wds = s.weekdays && s.weekdays.length ? s.weekdays : [0, 1, 2, 3, 4, 5, 6];
+  let g = 0;
+  while (d <= e && g++ < 1500) {
+    if (wds.includes(d.getDay())) { const ds = fmtD(d); (times.length ? times : ['']).forEach(t => out.push({date: ds, time: t, key: ds + ' ' + t, s})); }
+    d.setDate(d.getDate() + 1);
+  }
+  return out;
+}
+const totalOf = s => s.priceMode === 'total' ? (s.price || 0) : (s.price || 0) * occurrences(s).length;
+const perVisit = s => { if (s.priceMode !== 'total') return s.price || 0; const n = occurrences(s).length; return n ? (s.price || 0) / n : 0; };
+function occIn(a, b) {
+  const out = [];
+  for (const s of services) {
+    if ((s.end || s.start) < a || s.start > b) continue;
+    occurrences(s).forEach(o => { if (o.date >= a && o.date <= b) out.push(o); });
+  }
+  return out.sort((x, y) => x.key.localeCompare(y.key));
+}
+function wdText(s) {
+  const w = s.weekdays || [];
+  if (!w.length || w.length === 7) return 'Todos os dias';
+  if (w.length === 5 && [1, 2, 3, 4, 5].every(x => w.includes(x))) return 'Seg a sex';
+  return w.slice().sort().map(i => WDN[i]).join(', ');
+}
+function periodText(s) { const e = s.end || s.start; return e === s.start ? short(s.start) : `${short(s.start)} → ${short(e)}`; }
+function statusOf(s) { const t = todayS(); if ((s.end || s.start) < t) return 'Concluído'; if (s.start > t) return 'Agendado'; return 'Em andamento'; }
+
+/* ---------- estado de navegação ---------- */
+let selDate = todayS();
+let finMode = 'semana', finAnchor = todayS();
+let svcFilter = 'ativos', svcSearch = '', cliSearch = '';
+let form = null; const formStack = [];
+let pickTarget = null; let showAllVisits = false; let chartYear = new Date().getFullYear();
+const view = $('#view');
+
+function setHeader(title, {back = false, right = ''} = {}) {
+  $('#hdr-title').textContent = title; $('#hdr-back').hidden = !back;
+  $('#hdr').classList.toggle('sub', !!back); $('#hdr-right').innerHTML = right;
+}
+function parseHash() {
+  const h = location.hash.slice(1) || 'agenda'; const [path, qs] = h.split('?'); const [route, id] = path.split('/');
+  return {route, id, q: new URLSearchParams(qs || '')};
+}
+
+function render(keep = false) {
+  const {route, id, q} = parseHash();
+  let html = ''; let tab = route; let fab = null;
+  switch (route) {
+    case 'servico': html = viewService(id, q); tab = 'servicos'; break;
+    case 'servico-editar': if ((!keep && !q.has('keep')) || !form || form._kind !== 'service') initServiceForm(id, q); html = viewServiceForm(); tab = 'servicos'; break;
+    case 'clientes': html = viewClients(); fab = '#cliente-editar/new'; break;
+    case 'cliente': html = viewClient(id); tab = 'clientes'; break;
+    case 'cliente-editar': if ((!keep && !q.has('keep')) || !form || form._kind !== 'client') initClientForm(id); html = viewClientForm(q); tab = 'clientes'; break;
+    case 'servicos': html = viewServices(); fab = '#servico-editar/new'; break;
+    case 'financeiro': html = viewFinance(); break;
+    case 'ajustes': html = viewSettings(); tab = 'financeiro'; break;
+    default: html = viewAgenda(); tab = 'agenda'; fab = '#servico-editar/new?start=' + selDate;
+  }
+  view.innerHTML = html;
+  document.querySelectorAll('.tabs a').forEach(a => a.classList.toggle('on', a.dataset.tab === tab));
+  const f = $('#fab'); f.hidden = !fab; if (fab) f.href = fab;
+  hydratePhotos();
+  if (route === 'servico-editar') updateLive();
+  if (route === 'ajustes') fillStorageInfo();
+  updateSyncUI();
+  if (!keep) window.scrollTo(0, 0);
+}
+
+/* ---------- AGENDA ---------- */
+function viewAgenda() {
+  setHeader('Agenda', {right: `<a class="hdr-btn gear" href="#ajustes" aria-label="Ajustes">${GEAR}<i id="sync-dot"></i></a>`});
+  const t = todayS(); const ws = weekStart(selDate);
+  const days = [...Array(7)].map((_, i) => addDays(ws, i));
+  const weekOcc = occIn(days[0], days[6]);
+  const cnt = d => weekOcc.filter(o => o.date === d).length;
+  const dayOcc = weekOcc.filter(o => o.date === selDate);
+  const doneN = dayOcc.filter(o => o.s.done && o.s.done[o.key]).length;
+  let h = syncKey ? '' : `<a class="card banner" href="#ajustes"><span style="font-size:22px">☁️</span><span class="small"><b>Sincronização desligada.</b> Os dados estão só neste aparelho. Toque para conectar.</span></a>`;
+  h += `<div class="week"><button class="arrow" data-action="week" data-n="-7" aria-label="Semana anterior">‹</button><div class="days">`;
+  h += days.map(d => `<button class="day ${d === selDate ? 'sel' : ''} ${d === t ? 'today' : ''}" data-action="pick-day" data-d="${d}"><span>${WD[parseD(d).getDay()]}</span><b>${parseD(d).getDate()}</b><i class="${cnt(d) ? 'dot' : ''}"></i></button>`).join('');
+  h += `</div><button class="arrow" data-action="week" data-n="7" aria-label="Próxima semana">›</button></div>`;
+  h += `<div class="day-head"><h2>${selDate === t ? 'Hoje · ' : ''}${esc(longDay(selDate))}</h2>`;
+  h += selDate !== t ? `<button class="link" data-action="today">Hoje</button>` : `<label class="goto">Ir para data<input type="date" data-change="goto" value="${selDate}"></label>`;
+  h += `</div>`;
+  if (dayOcc.length) {
+    const nv = dayOcc.filter(o => !isAppt(o.s)).length, na = dayOcc.length - nv; const parts = [];
+    if (nv) parts.push(`${nv} ${nv === 1 ? 'visita' : 'visitas'}`);
+    if (na) parts.push(`${na} ${na === 1 ? 'compromisso' : 'compromissos'}`);
+    h += `<div class="muted small" style="margin:2px 2px 0">${parts.join(' · ')} · ${doneN} ${doneN === 1 ? 'feito' : 'feitos'}</div>`;
+    h += dayOcc.map(o => occCard(o)).join('');
+  } else {
+    const next = occIn(addDays(selDate, 1), addDays(selDate, 120))[0];
+    h += `<div class="empty"><div class="big">🐾</div>Nenhuma visita neste dia.`;
+    if (next) { h += `<div style="margin-top:14px"><a class="pill" href="#" data-action="pick-day" data-d="${next.date}">Próxima: ${WDN[parseD(next.date).getDay()]} ${short(next.date)} ${esc(next.time)} · ${esc(titleOf(next.s))}</a></div>`; }
+    h += `</div>`;
+  }
+  return h;
+}
+function occCard(o) {
+  const s = o.s; const done = !!(s.done && s.done[o.key]); const addr = addrOf(s); const appt = isAppt(s);
+  return `<a class="card occ ${appt ? 'appt' : ''} ${done ? 'done' : ''}" href="#servico/${s.id}?k=${encodeURIComponent(o.key)}">
+    <div class="occ-time">${esc(o.time || '—')}</div>${thumbOf(s)}
+    <div class="occ-body"><div class="occ-title">${esc(titleOf(s))}</div>
+      <div class="occ-sub">${esc(whoOf(s))}${appt ? '' : (whoOf(s) ? ' · ' : '') + (TYPES[s.type] || '')}</div>
+      ${addr ? `<div class="occ-addr">${esc(addr.split('\n')[0])}</div>` : ''}</div>
+    <button class="check ${done ? 'on' : ''}" data-action="toggle-done" data-sid="${s.id}" data-key="${esc(o.key)}" aria-label="Marcar como feito">✓</button></a>`;
+}
+
+/* ---------- SERVIÇOS ---------- */
+function viewServices() {
+  setHeader('Serviços');
+  return `<div class="seg" style="margin-top:4px">
+    <button class="${svcFilter === 'ativos' ? 'on' : ''}" data-action="svc-filter" data-f="ativos">Ativos e próximos</button>
+    <button class="${svcFilter === 'historico' ? 'on' : ''}" data-action="svc-filter" data-f="historico">Histórico</button></div>
+    <input class="search mt" type="search" placeholder="Buscar pet ou cliente" data-filter="svc" value="${esc(svcSearch)}">
+    <div id="list">${servicesList()}</div>`;
+}
+function servicesList() {
+  const t = todayS(); const term = svcSearch.trim().toLowerCase();
+  let list = services.filter(s => svcFilter === 'ativos' ? (s.end || s.start) >= t : (s.end || s.start) < t);
+  if (term) list = list.filter(s => (titleOf(s) + ' ' + whoOf(s) + ' ' + addrOf(s) + ' ' + (s.notes || '')).toLowerCase().includes(term));
+  list.sort((a, b) => svcFilter === 'ativos' ? a.start.localeCompare(b.start) : b.start.localeCompare(a.start));
+  if (!list.length) return `<div class="empty"><div class="big">📋</div>${svcFilter === 'ativos' ? 'Nenhum serviço ativo ou agendado.<br>Toque em + para criar.' : 'Nada no histórico ainda.'}</div>`;
+  return list.map(svcRow).join('');
+}
+function svcRow(s) {
+  const n = occurrences(s).length; const appt = isAppt(s);
+  const right = appt ? `<span class="chip appt">Sem cobrança</span>` : `<div style="font-weight:700">${money(totalOf(s))}</div><span class="chip ${s.payStatus}">${PAY[s.payStatus]}</span>`;
+  const sub = appt ? `${periodText(s)} · ${occurrences(s).map(o => o.time).filter(Boolean).slice(0, 3).join(', ') || 'sem horário'}`
+                   : `${periodText(s)} · ${n} ${n === 1 ? 'visita' : 'visitas'} · ${TYPES[s.type] || ''}`;
+  return `<a class="card row ${appt ? 'appt' : ''}" href="#servico/${s.id}">${thumbOf(s)}
+    <div class="grow"><div class="row-title">${esc(titleOf(s))}</div>
+      <div class="row-sub">${sub}</div>
+      <div class="row-sub">${esc(whoOf(s))}${whoOf(s) ? ' · ' : ''}${statusOf(s)}</div></div>
+    <div class="right">${right}</div></a>`;
+}
+
+function viewService(id, q) {
+  const s = services.find(x => x.id === id);
+  if (!s) { setHeader('Serviço', {back: true}); return `<div class="empty">Serviço não encontrado.</div>`; }
+  const appt = isAppt(s); const c = clientById(s.clientId);
+  const occ = occurrences(s); const key = q.get('k'); const t = todayS();
+  setHeader(appt ? titleOf(s) : petNames(c || {name: '(cliente removido)'}), {back: true, right: `<a class="hdr-btn" href="#servico-editar/${s.id}">Editar</a>`});
+  let h = '';
+  const o = key && occ.find(o => o.key === key);
+  if (o) {
+    const done = !!(s.done && s.done[o.key]); const checks = (s.checks && s.checks[o.key]) || [];
+    h += `<div class="card visit-card"><div class="label">${appt ? 'Este compromisso' : 'Esta visita'}</div><div class="visit-when">${esc(longDay(o.date))}${o.time ? ' · ' + esc(o.time) : ''}</div>`;
+    if (!appt && (s.checklist || []).length) h += s.checklist.map((it, i) => `<button class="cl" data-action="toggle-check" data-sid="${s.id}" data-key="${esc(o.key)}" data-i="${i}"><span class="check ${checks.includes(i) ? 'on' : ''}">✓</span>${esc(it)}</button>`).join('');
+    h += `<button class="btn ${done ? 'ghost' : 'primary'}" data-action="toggle-done" data-sid="${s.id}" data-key="${esc(o.key)}">${done ? '✓ Feito · desfazer' : (appt ? 'Marcar como feito' : 'Marcar visita como feita')}</button></div>`;
+  }
+  if (appt) {
+    h += `<div class="card appt"><div style="display:flex;gap:12px;align-items:center">${thumbOf(s)}<div><div style="font-weight:650">${esc(titleOf(s))}</div>
+      <div class="muted small">${esc(whoOf(s) || 'Sem cliente vinculado')}</div></div></div>
+      <div class="muted small" style="margin-top:10px">Compromisso sem cobrança · não entra no financeiro</div></div>`;
+  } else {
+    h += `<div class="card"><div class="pets">${c && (c.pets || []).length ? c.pets.map(petBlock).join('') : '<span class="muted">Nenhum pet cadastrado</span>'}</div>
+    <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap"><span class="chip type">${TYPES[s.type] || ''}</span><span class="chip">${statusOf(s)}</span></div></div>`;
+  }
+  if (s.notes) h += `<div class="sec">Observações</div><div class="card pre">${esc(s.notes)}</div>`;
+  if (c) h += clientBlocks(c);
+  else if (s.contactName || s.contactPhone || s.contactAddress) h += clientBlocks({name: s.contactName, phone: s.contactPhone, address: s.contactAddress});
+  const doneN = occ.filter(o => s.done && s.done[o.key]).length;
+  h += `<div class="sec">Datas e horários</div><div class="card">
+    <div class="kv"><span>Período</span><span>${s.start ? periodText(s) : '—'}</span></div>`;
+  if (s.mode === 'personalizado') h += `<div class="kv"><span>Agenda</span><span>Escolhida ${appt ? 'data a data' : 'visita a visita'}</span></div>`;
+  else h += `<div class="kv"><span>Dias</span><span>${wdText(s)}</span></div><div class="kv"><span>Horários</span><span>${(s.times || []).filter(Boolean).sort().join(', ') || '—'}</span></div>`;
+  h += `<div class="kv"><span>${appt ? 'Datas' : 'Visitas'}</span><span>${occ.length} (${doneN} ${doneN === 1 ? 'feita' : 'feitas'})</span></div></div>`;
+  if (!appt) h += `<div class="sec">Valores</div><div class="card">
+    <div class="kv"><span>Por visita</span><span>${money(perVisit(s))}</span></div>
+    <div class="kv"><span>Total</span><span>${money(totalOf(s))}</span></div>
+    <div class="label" style="margin-top:12px">Cobrança</div>${segPay(s.payStatus, `data-sid="${s.id}"`, 'set-pay')}</div>`;
+  const upcoming = occ.filter(o => o.date >= t);
+  const list = showAllVisits ? occ : (upcoming.length ? upcoming.slice(0, 6) : occ.slice(-6));
+  h += `<div class="sec">${appt ? 'Datas' : 'Visitas'}</div><div class="card">${list.map(o => {
+    const d = !!(s.done && s.done[o.key]);
+    return `<div class="vrow ${o.date < t ? 'past' : ''}"><div class="grow">${WDN[parseD(o.date).getDay()]} ${short(o.date)} <b>${esc(o.time)}</b></div>
+      <button class="check ${d ? 'on' : ''}" data-action="toggle-done" data-sid="${s.id}" data-key="${esc(o.key)}">✓</button></div>`;
+  }).join('') || '<span class="muted">Sem datas</span>'}
+    ${occ.length > list.length || showAllVisits ? `<button class="link" data-action="all-visits">${showAllVisits ? 'Mostrar menos' : `Ver todas as ${occ.length}`}</button>` : ''}</div>`;
+  h += `<div class="btns"><a class="btn ghost" href="#servico-editar/new?from=${s.id}">Duplicar</a>${c ? `<a class="btn ghost" href="#cliente/${s.clientId}">Ficha do cliente</a>` : ''}</div>
+    <button class="btn danger" data-action="delete-service" data-sid="${s.id}">Excluir</button>`;
+  return h;
+}
+function petBlock(p) {
+  return `<button class="pet" ${p.photo ? `data-action="zoom" data-id="${p.photo}"` : ''}>${p.photo ? `<img data-photo="${p.photo}" alt="">` : '<div class="ph">🐾</div>'}<b>${esc(p.name || 'Pet')}</b>${p.species ? `<span>${esc(p.species)}</span>` : ''}</button>`;
+}
+function clientBlocks(c) {
+  let h = `<div class="sec">Tutor e endereço</div><div class="card"><div style="font-weight:650">${esc(c.name || '')}</div>`;
+  if (c.phone) h += `<div class="muted">${esc(c.phone)}</div>`;
+  if (c.address) h += `<div class="pre" style="margin-top:8px">${esc(c.address)}</div>`;
+  h += `<div class="actions">`;
+  if (c.phone) { let d = c.phone.replace(/\D/g, ''); if (d.length <= 11) d = '55' + d;
+    h += `<a class="pill" href="tel:${esc(c.phone.replace(/[^\d+]/g, ''))}">Ligar</a><a class="pill" href="https://wa.me/${d}" target="_blank" rel="noopener">WhatsApp</a>`; }
+  if (c.address) h += `<a class="pill" href="https://maps.apple.com/?q=${encodeURIComponent(c.address)}" target="_blank" rel="noopener">Abrir no Mapas</a>`;
+  h += `</div></div>`;
+  if (c.keyPhoto || c.lockCode || c.keyNotes) {
+    h += `<div class="sec">Acesso à casa</div><div class="card">`;
+    if (c.lockCode) h += `<div class="label">Senha</div><button class="code" data-action="reveal" data-code="${esc(c.lockCode)}">•••• <span class="muted small" style="letter-spacing:0;font-family:-apple-system,sans-serif;font-weight:500">toque para ver</span></button>`;
+    if (c.keyNotes) h += `<div class="pre" style="margin-top:10px">${esc(c.keyNotes)}</div>`;
+    if (c.keyPhoto) h += `<div class="label" style="margin-top:12px">Chave</div><button style="border:0;padding:0;width:100%;background:none" data-action="zoom" data-id="${c.keyPhoto}"><img class="keyimg" data-photo="${c.keyPhoto}" alt="Foto da chave"></button>`;
+    h += `</div>`;
+  }
+  if (c.notes) h += `<div class="sec">Sobre o cliente</div><div class="card pre">${esc(c.notes)}</div>`;
+  return h;
+}
+function segPay(cur, attrs, action) {
+  return `<div class="seg pay">${Object.entries(PAY).map(([k, v]) => `<button class="${k} ${cur === k ? 'on' : ''}" data-action="${action}" data-val="${k}" ${attrs}>${v}</button>`).join('')}</div>`;
+}
+function seg(path, opts, cur, cls = '') {
+  return `<div class="seg ${cls} ${path === 'payStatus' ? 'pay' : ''}">${Object.entries(opts).map(([k, v]) => `<button type="button" class="${k} ${cur === k ? 'on' : ''}" data-action="set" data-path="${path}" data-val="${k}">${v}</button>`).join('')}</div>`;
+}
+
+/* ---------- formulário de serviço / compromisso ---------- */
+function initServiceForm(id, q) {
+  formStack.length = 0; showAllVisits = false;
+  const ex = id !== 'new' && services.find(s => s.id === id);
+  const from = q.get('from') && services.find(s => s.id === q.get('from'));
+  const base = ex || from;
+  const defaults = {kind: 'servico', clientId: '', type: 'visita', mode: 'repetir', start: '', end: '', weekdays: [0, 1, 2, 3, 4, 5, 6], times: ['08:00'],
+    visits: [], apptType: 'conhecer', contactName: '', contactPhone: '', contactAddress: '', priceMode: 'visita', price: '', payStatus: 'pendente',
+    notes: '', checklistText: '', done: {}, checks: {}};
+  if (base) {
+    form = Object.assign({}, defaults, JSON.parse(JSON.stringify(base)));
+    form.checklistText = (base.checklist || []).join('\n'); form.price = base.price ? String(base.price).replace('.', ',') : '';
+    if (!ex) { delete form.id; form.done = {}; form.checks = {}; form.payStatus = 'pendente'; form.start = ''; form.end = '';
+      form.visits = (form.visits || []).map(v => ({date: '', time: v.time})); }
+  } else {
+    const st = q.get('start') || todayS();
+    form = Object.assign({}, defaults, {clientId: q.get('client') || '', start: st, end: st});
+    if (q.get('kind') === 'compromisso') setKind('compromisso');
+  }
+  form._kind = 'service'; form._route = 'servico-editar/' + (ex ? ex.id : 'new');
+}
+function setKind(k) {
+  form.kind = k;
+  if (k === 'compromisso') { form.mode = 'personalizado'; if (!form.visits.filter(v => v.date).length) form.visits = [{date: form.start || todayS(), time: '09:00'}]; }
+}
+function toCustom() {
+  const s = formAsService(); s.mode = 'repetir';
+  form.visits = occurrences({...s, mode: 'repetir'}).map(o => ({date: o.date, time: o.time}));
+  if (!form.visits.length) form.visits = [{date: form.start || todayS(), time: ''}];
+  form.mode = 'personalizado';
+}
+function viewServiceForm() {
+  const f = form; const isEdit = !!f.id; const appt = f.kind === 'compromisso';
+  setHeader(isEdit ? (appt ? 'Editar compromisso' : 'Editar serviço') : (appt ? 'Novo compromisso' : 'Novo serviço'), {back: true});
+  const opts = clients.slice().sort((a, b) => petNames(a).localeCompare(petNames(b)))
+    .map(c => `<option value="${c.id}" ${c.id === f.clientId ? 'selected' : ''}>${esc(petNames(c))} — ${esc(c.name || '')}</option>`).join('');
+  let h = `<div class="seg" style="margin-top:4px">
+    <button type="button" class="${!appt ? 'on' : ''}" data-action="set-kind" data-val="servico">Serviço</button>
+    <button type="button" class="${appt ? 'on' : ''}" data-action="set-kind" data-val="compromisso">Compromisso (sem cobrança)</button></div>`;
+  if (appt) h += `<div class="field"><label>O que vai fazer</label>${seg('apptType', APPT_SHORT, f.apptType, 'wrap')}</div>`;
+  h += `<div class="field"><label>${appt ? 'Cliente (se já tiver cadastro)' : 'Cliente / pet'}</label>
+    ${clients.length ? `<select data-bind="clientId" data-rerender="1"><option value="">${appt ? 'Ainda não cadastrado' : 'Selecione…'}</option>${opts}</select>` : '<div class="muted small">Nenhum cliente cadastrado ainda.</div>'}
+    <button class="link" data-action="new-client-from-service">+ Cadastrar novo cliente</button></div>`;
+  if (appt && !f.clientId) h += `
+    <div class="field"><label>Nome do contato</label><input data-bind="contactName" autocomplete="off" value="${esc(f.contactName)}"></div>
+    <div class="field"><label>Telefone</label><input type="tel" data-bind="contactPhone" value="${esc(f.contactPhone)}"></div>
+    <div class="field"><label>Endereço</label><textarea rows="2" data-bind="contactAddress">${esc(f.contactAddress)}</textarea></div>`;
+  if (!appt) h += `<div class="field"><label>Tipo</label>${seg('type', TYPES, f.type)}</div>
+    <div class="field"><label>Como são as visitas</label>${seg('mode', {repetir: 'Mesmos horários todo dia', personalizado: 'Escolher cada visita'}, f.mode, 'wrap')}</div>`;
+  if (!appt && f.mode === 'repetir') {
+    h += `<div class="row2"><div class="field"><label>De</label><input type="date" data-bind="start" data-live="1" value="${esc(f.start)}"></div>
+      <div class="field"><label>Até</label><input type="date" id="end" data-bind="end" data-live="1" value="${esc(f.end)}"></div></div>
+    <div class="field"><label>Dias da semana</label><div class="wds">${WD.map((l, i) => `<button type="button" class="wd ${f.weekdays.includes(i) ? 'on' : ''}" data-action="toggle-wd" data-i="${i}">${l}</button>`).join('')}</div></div>
+    <div class="field"><label>Horários (repetem em todos os dias selecionados)</label>
+      ${f.times.map((t, i) => `<div class="time-row"><input type="time" data-bind="times.${i}" data-live="1" value="${esc(t)}"><button type="button" class="icon-btn" data-action="remove-time" data-i="${i}" aria-label="Remover">✕</button></div>`).join('')}
+      <button class="link" data-action="add-time">+ Adicionar horário</button></div>
+    <button class="link" data-action="to-custom" style="padding-top:0">Ajustar visitas uma a uma (tirar ou mudar horários de um dia) →</button>`;
+  } else {
+    h += `<div class="field"><label>${appt ? 'Data e horário' : 'Visitas — data e horário de cada uma'}</label>
+      ${f.visits.map((v, i) => `<div class="visit-edit"><input type="date" data-bind="visits.${i}.date" data-live="1" value="${esc(v.date)}"><input type="time" data-bind="visits.${i}.time" data-live="1" value="${esc(v.time)}"><button type="button" class="icon-btn" data-action="remove-visit" data-i="${i}" aria-label="Remover">✕</button></div>`).join('')}
+      <button class="link" data-action="add-visit">+ Adicionar ${appt ? 'outra data' : 'visita'}</button></div>`;
+  }
+  if (!appt) h += `<div class="live" id="live"></div>
+    <div class="field"><label>Valor</label>${seg('priceMode', {visita: 'Por visita', total: 'Valor total'}, f.priceMode)}
+      <input class="mt" type="text" inputmode="decimal" placeholder="R$ 0,00" data-bind="price" data-live="1" value="${esc(f.price)}"></div>
+    <div class="field"><label>Cobrança</label>${seg('payStatus', PAY, f.payStatus)}</div>`;
+  h += `<div class="field"><label>${appt ? 'Observações' : 'Observações (passeios, comida, remédios, manias…)'}</label><textarea rows="${appt ? 3 : 5}" data-bind="notes">${esc(f.notes)}</textarea></div>`;
+  if (!appt) h += `<div class="field"><label>Checklist da visita (opcional · um item por linha)</label><textarea rows="3" data-bind="checklistText" placeholder="Ração&#10;Água fresca&#10;Remédio">${esc(f.checklistText)}</textarea></div>`;
+  h += `<button class="btn primary" data-action="save-service">Salvar</button>
+    ${isEdit ? `<button class="btn danger" data-action="delete-service" data-sid="${f.id}">Excluir</button>` : ''}`;
+  return h;
+}
+function formAsService() {
+  const s = {...form, price: num(form.price)};
+  if (s.mode === 'personalizado') {
+    const seen = new Set();
+    s.visits = (form.visits || []).filter(v => v.date).map(v => ({date: v.date, time: v.time || ''}))
+      .filter(v => { const k = v.date + ' ' + v.time; if (seen.has(k)) return false; seen.add(k); return true; })
+      .sort((a, b) => (a.date + ' ' + a.time).localeCompare(b.date + ' ' + b.time));
+    s.start = s.visits.length ? s.visits[0].date : ''; s.end = s.visits.length ? s.visits[s.visits.length - 1].date : '';
+  } else { s.end = form.end || form.start; s.times = form.times.filter(Boolean); }
+  return s;
+}
+function updateLive() {
+  const el = $('#live'); if (!el || !form) return;
+  const s = formAsService();
+  if (!s.start) { el.textContent = 'Escolha as datas para ver o total de visitas.'; return; }
+  const n = occurrences(s).length;
+  el.textContent = `${n} ${n === 1 ? 'visita' : 'visitas'} no período` + (s.price ? ` · total ${money(totalOf(s))}` + (s.priceMode === 'total' && n ? ` (${money(perVisit(s))}/visita)` : '') : '');
+}
+async function saveService() {
+  const s = formAsService(); const appt = s.kind === 'compromisso';
+  if (!appt && !s.clientId) return alert('Selecione o cliente.');
+  if (appt && !s.clientId && !(s.contactName || '').trim()) return alert('Escolha o cliente ou informe o nome do contato.');
+  if (s.mode === 'personalizado') {
+    if (!s.visits.length) return alert(appt ? 'Informe a data.' : 'Adicione pelo menos uma visita com data.');
+    const typed = form.visits.filter(v => v.date).length;
+    if (typed !== s.visits.length && !confirm('Há visitas repetidas (mesma data e horário). Elas serão juntadas em uma só. Continuar?')) return;
+  } else {
+    if (!s.start) return alert('Informe a data de início.');
+    if (s.end < s.start) return alert('A data final está antes da inicial.');
+    if (!(s.weekdays || []).length) return alert('Selecione pelo menos um dia da semana.');
+    s.times = [...new Set(s.times)].sort();
+    if (!occurrences(s).length) return alert('Nenhuma visita cai nesse período com os dias escolhidos.');
+  }
+  s.checklist = appt ? [] : (form.checklistText || '').split('\n').map(x => x.trim()).filter(Boolean);
+  if (appt) { s.price = 0; s.priceMode = 'visita'; s.payStatus = 'pendente'; }
+  if (s.clientId) { s.contactName = ''; s.contactPhone = ''; s.contactAddress = ''; }
+  delete s.checklistText; delete s._kind; delete s._route;
+  if (!s.id) { s.id = uid(); s.createdAt = Date.now(); }
+  s.done = s.done || {}; s.checks = s.checks || {};
+  await saveRec('services', s);
+  const i = services.findIndex(x => x.id === s.id); if (i >= 0) services[i] = s; else services.push(s);
+  form = null; toast(appt ? 'Compromisso salvo' : 'Serviço salvo');
+  location.replace('#servico/' + s.id);
+}
+
+/* ---------- CLIENTES ---------- */
+function viewClients() {
+  setHeader('Clientes');
+  return `<input class="search" type="search" placeholder="Buscar pet, tutor ou endereço" data-filter="cli" value="${esc(cliSearch)}"><div id="list">${clientsList()}</div>`;
+}
+function clientsList() {
+  const term = cliSearch.trim().toLowerCase();
+  let list = clients.slice().sort((a, b) => petNames(a).localeCompare(petNames(b)));
+  if (term) list = list.filter(c => (petNames(c) + ' ' + c.name + ' ' + (c.address || '')).toLowerCase().includes(term));
+  if (!list.length) return `<div class="empty"><div class="big">🐶</div>${clients.length ? 'Nenhum resultado.' : 'Nenhum cliente ainda.<br>Toque em + para cadastrar.'}</div>`;
+  return list.map(c => {
+    const n = services.filter(s => s.clientId === c.id).length;
+    return `<a class="card row" href="#cliente/${c.id}">${thumb(c)}<div class="grow"><div class="row-title">${esc(petNames(c))}</div>
+      <div class="row-sub">${esc(c.name || '')}${n ? ` · ${n} ${n === 1 ? 'serviço' : 'serviços'}` : ''}</div>
+      ${c.address ? `<div class="row-sub">${esc(c.address.split('\n')[0])}</div>` : ''}</div><span class="chev">›</span></a>`;
+  }).join('');
+}
+function viewClient(id) {
+  const c = clientById(id);
+  if (!c) { setHeader('Cliente', {back: true}); return `<div class="empty">Cliente não encontrado.</div>`; }
+  setHeader(petNames(c), {back: true, right: `<a class="hdr-btn" href="#cliente-editar/${c.id}">Editar</a>`});
+  const svcs = services.filter(s => s.clientId === c.id).sort((a, b) => b.start.localeCompare(a.start));
+  const paid = svcs.filter(s => s.payStatus === 'pago').reduce((a, s) => a + totalOf(s), 0);
+  const open = svcs.filter(s => s.payStatus !== 'pago').reduce((a, s) => a + totalOf(s), 0);
+  let h = `<div class="card"><div class="pets">${(c.pets || []).map(petBlock).join('') || '<span class="muted">Nenhum pet</span>'}</div></div>`;
+  h += clientBlocks(c);
+  h += `<div class="sec">Histórico</div><div class="card"><div class="kv"><span>Serviços</span><span>${svcs.length}</span></div>
+    <div class="kv"><span>Recebido</span><span>${money(paid)}</span></div><div class="kv"><span>Em aberto</span><span>${money(open)}</span></div></div>`;
+  h += svcs.map(svcRow).join('');
+  h += `<a class="btn primary" href="#servico-editar/new?client=${c.id}">+ Novo serviço para ${esc(petNames(c))}</a>`;
+  return h;
+}
+function initClientForm(id) {
+  const ex = id !== 'new' && clientById(id);
+  form = ex ? JSON.parse(JSON.stringify(ex)) : {name: '', phone: '', address: '', pets: [{id: uid(), name: '', species: '', photo: null}], keyPhoto: null, lockCode: '', keyNotes: '', notes: ''};
+  form._kind = 'client'; form._del = [];
+}
+function photoSlot(path, id, shape) {
+  if (id) return `<div class="photo-slot ${shape}"><img data-photo="${id}" alt=""><button type="button" class="ph-x" data-action="remove-photo" data-path="${path}" aria-label="Remover foto">✕</button><button type="button" class="ph-change" data-action="pick-photo" data-path="${path}">Trocar</button></div>`;
+  return `<button type="button" class="photo-slot empty ${shape}" data-action="pick-photo" data-path="${path}">📷<span>Foto</span></button>`;
+}
+function viewClientForm(q) {
+  const f = form; const isEdit = !!f.id;
+  setHeader(isEdit ? 'Editar cliente' : 'Novo cliente', {back: true});
+  return `
+  <div class="sec" style="margin-top:6px">Pets</div>
+  ${f.pets.map((p, i) => `<div class="card pet-edit">${photoSlot(`pets.${i}.photo`, p.photo, 'round')}
+    <div class="grow"><input data-bind="pets.${i}.name" placeholder="Nome do pet" value="${esc(p.name)}"><input class="mt" data-bind="pets.${i}.species" placeholder="Espécie / raça (opcional)" value="${esc(p.species)}"></div>
+    ${f.pets.length > 1 ? `<button type="button" class="icon-btn" style="height:46px" data-action="remove-pet" data-i="${i}" aria-label="Remover pet">✕</button>` : ''}</div>`).join('')}
+  <button class="link" data-action="add-pet">+ Adicionar outro pet</button>
+  <div class="sec">Tutor</div>
+  <div class="field"><label>Nome</label><input data-bind="name" autocomplete="off" value="${esc(f.name)}"></div>
+  <div class="field"><label>Telefone / WhatsApp</label><input type="tel" data-bind="phone" value="${esc(f.phone)}"></div>
+  <div class="field"><label>Endereço</label><textarea rows="2" data-bind="address" placeholder="Rua, número, apto, bairro">${esc(f.address)}</textarea></div>
+  <div class="sec">Acesso à casa</div>
+  <div class="field"><label>Senha da fechadura / portão</label><input data-bind="lockCode" autocomplete="off" value="${esc(f.lockCode)}"></div>
+  <div class="field"><label>Instruções de acesso</label><textarea rows="2" data-bind="keyNotes" placeholder="Portaria, onde fica a chave, alarme…">${esc(f.keyNotes)}</textarea></div>
+  <div class="field"><label>Foto da chave</label>${photoSlot('keyPhoto', f.keyPhoto, 'wide')}</div>
+  <div class="sec">Observações gerais</div>
+  <textarea rows="4" data-bind="notes" placeholder="Temperamento, veterinário, alergias, preferências…">${esc(f.notes)}</textarea>
+  <button class="btn primary" data-action="save-client" data-ret="${q.get('ret') ? 1 : ''}">Salvar</button>
+  ${isEdit ? `<button class="btn danger" data-action="delete-client">Excluir cliente</button>` : ''}`;
+}
+async function saveClient(ret) {
+  const c = JSON.parse(JSON.stringify(form)); const del = c._del || [];
+  c.pets = c.pets.filter(p => (p.name || '').trim() || p.photo);
+  if (!c.name.trim() && !c.pets.length) return alert('Informe pelo menos o nome do pet ou do tutor.');
+  delete c._kind; delete c._del;
+  if (!c.id) { c.id = uid(); c.createdAt = Date.now(); }
+  await saveRec('clients', c);
+  const i = clients.findIndex(x => x.id === c.id); if (i >= 0) clients[i] = c; else clients.push(c);
+  for (const id of del) await deletePhoto(id);
+  toast('Cliente salvo');
+  if (ret && formStack.length) { const d = formStack.pop(); d.clientId = c.id; form = d; location.replace('#' + d._route + '?keep=1'); return; }
+  form = null; location.replace('#cliente/' + c.id);
+}
+
+/* ---------- FINANCEIRO ---------- */
+function finRange() {
+  if (finMode === 'semana') { const a = weekStart(finAnchor); const b = addDays(a, 6); return [a, b, `${short(a)} – ${short(b)}`]; }
+  const d = parseD(finAnchor); const a = fmtD(new Date(d.getFullYear(), d.getMonth(), 1)); const b = fmtD(new Date(d.getFullYear(), d.getMonth() + 1, 0));
+  return [a, b, d.toLocaleDateString('pt-BR', {month: 'long', year: 'numeric'})];
+}
+function viewFinance() {
+  setHeader('Financeiro', {right: `<a class="hdr-btn gear" href="#ajustes" aria-label="Ajustes">${GEAR}<i id="sync-dot"></i></a>`});
+  const [a, b, label] = finRange();
+  const tot = {pendente: 0, cobrado: 0, pago: 0}; const rows = []; let visits = 0, doneV = 0;
+  for (const s of services) {
+    if (isAppt(s) || (s.end || s.start) < a || s.start > b) continue;
+    const os = occurrences(s).filter(o => o.date >= a && o.date <= b); if (!os.length) continue;
+    const v = os.length * perVisit(s); tot[s.payStatus || 'pendente'] += v; visits += os.length;
+    doneV += os.filter(o => s.done && s.done[o.key]).length; rows.push({s, n: os.length, v, first: os[0].key});
+  }
+  rows.sort((x, y) => x.first.localeCompare(y.first));
+  const total = tot.pendente + tot.cobrado + tot.pago;
+  const pct = k => total ? (tot[k] / total * 100).toFixed(1) : 0;
+  let openAll = 0; services.forEach(s => { if (!isAppt(s) && s.payStatus !== 'pago') openAll += totalOf(s); });
+  let h = `<div class="seg" style="margin-top:4px"><button class="${finMode === 'semana' ? 'on' : ''}" data-action="fin-mode" data-m="semana">Semana</button><button class="${finMode === 'mes' ? 'on' : ''}" data-action="fin-mode" data-m="mes">Mês</button></div>
+  <div class="fin-nav"><button class="arrow" data-action="fin-nav" data-n="-1">‹</button><b>${esc(label)}</b><button class="arrow" data-action="fin-nav" data-n="1">›</button></div>
+  <div class="card"><div class="label">Total no período</div><div class="total">${money(total)}</div>
+    <div class="muted small">${visits} ${visits === 1 ? 'visita' : 'visitas'} · ${doneV} ${doneV === 1 ? 'feita' : 'feitas'}</div>
+    <div class="bar"><i style="width:${pct('pago')}%;background:var(--accent)"></i><i style="width:${pct('cobrado')}%;background:var(--warn)"></i><i style="width:${pct('pendente')}%;background:var(--danger)"></i></div>
+    <div class="grid3" style="margin-top:10px">
+      <div class="stat pago"><small>Recebido</small><b>${money(tot.pago)}</b></div>
+      <div class="stat cobrado"><small>Cobrado</small><b>${money(tot.cobrado)}</b></div>
+      <div class="stat pendente"><small>Não cobrado</small><b>${money(tot.pendente)}</b></div></div></div>`;
+  if (openAll) h += `<div class="card row"><div class="grow"><div class="row-title">Total em aberto</div><div class="row-sub">Todos os períodos</div></div><b>${money(openAll)}</b></div>`;
+  h += paidChart();
+  h += `<div class="sec">Serviços no período</div>`;
+  h += rows.length ? rows.map(({s, n, v}) => { const c = clientById(s.clientId) || {};
+    return `<a class="card row" href="#servico/${s.id}">${thumb(c)}<div class="grow"><div class="row-title">${esc(petNames(c))}</div>
+      <div class="row-sub">${n} ${n === 1 ? 'visita' : 'visitas'} no período · ${periodText(s)}</div></div>
+      <div class="right"><div style="font-weight:700">${money(v)}</div><button class="chip ${s.payStatus}" data-action="cycle-pay" data-sid="${s.id}">${PAY[s.payStatus]} ↻</button></div></a>`; }).join('')
+    : `<div class="empty"><div class="big">💸</div>Nenhum serviço neste período.</div>`;
+  h += `<p class="muted small" style="text-align:center">Toque no status para alternar: Não cobrado → Cobrado → Pago.<br>Serviços de valor total são divididos igualmente entre as visitas.<br>Compromissos (conhecer cliente, chave) não entram no financeiro.</p>`;
+  return h;
+}
+
+function paidChart() {
+  const y = chartYear; const months = Array(12).fill(0);
+  for (const s of services) {
+    if (isAppt(s) || s.payStatus !== 'pago') continue;
+    const pv = perVisit(s);
+    for (const o of occurrences(s)) if (+o.date.slice(0, 4) === y) months[+o.date.slice(5, 7) - 1] += pv;
+  }
+  const max = Math.max(...months); const total = months.reduce((a, b) => a + b, 0);
+  const anc = parseD(finAnchor); const now = new Date();
+  const sel = finMode === 'mes' && anc.getFullYear() === y ? anc.getMonth() : (now.getFullYear() === y ? now.getMonth() : -1);
+  const compact = v => v >= 1000 ? (v / 1000).toFixed(1).replace('.', ',').replace(',0', '') + 'k' : String(Math.round(v));
+  const fullMonth = i => cap(new Date(y, i, 1).toLocaleDateString('pt-BR', {month: 'long'}));
+  let h = `<div class="sec">Recebido mês a mês</div><div class="card">
+    <div class="chart-head"><span class="muted small">Só serviços marcados como <b>Pago</b></span>
+      <div class="yr"><button class="arrow" data-action="year-nav" data-n="-1" aria-label="Ano anterior">‹</button><b>${y}</b><button class="arrow" data-action="year-nav" data-n="1" aria-label="Próximo ano">›</button></div></div>
+    <div class="chart" role="img" aria-label="Valores recebidos por mês em ${y}">`;
+  h += months.map((v, i) => {
+    const pct = max ? v / max * 84 : 0; const label = v && (i === sel || v === max);
+    return `<button class="col" data-action="fin-month" data-m="${i}" title="${MN[i]}: ${money(v)}" aria-label="${fullMonth(i)}: ${money(v)}">
+      ${label ? `<span class="val">${compact(v)}</span>` : ''}<i style="height:${pct}%"></i></button>`;
+  }).join('');
+  h += `</div><div class="months">${MN.map((m, i) => `<span class="${i === sel ? 'sel' : ''}">${m}</span>`).join('')}</div>`;
+  if (!total) h += `<div class="chart-empty">Nenhum valor marcado como pago em ${y}.</div>`;
+  h += `<div class="chart-info"><span>${sel >= 0 ? `${fullMonth(sel)}: <b>${money(months[sel])}</b>` : ''}</span><span class="muted">Ano: <b style="color:var(--ink)">${money(total)}</b></span></div>
+    <div class="muted small" style="margin-top:4px">Toque numa barra para ver o resumo daquele mês.</div></div>`;
+  return h;
+}
+
+/* ---------- AJUSTES / BACKUP ---------- */
+function viewSettings() {
+  setHeader('Ajustes e backup', {back: true});
+  let last = null; try { last = localStorage.getItem('lastBackup'); } catch (e) {}
+  const sync = syncKey ? `<div class="card"><div style="font-weight:650">☁️ Sincronização entre aparelhos</div>
+      <p class="muted small" style="margin:6px 0 0">Conectado. Tudo que for feito aqui aparece nos outros aparelhos conectados com a mesma senha, e vice-versa.</p>
+      <div class="sync-status" id="sync-status"></div>
+      <button class="btn primary" data-action="sync-now">Sincronizar agora</button>
+      <button class="btn danger" data-action="sync-off">Desconectar este aparelho</button></div>`
+    : `<div class="card"><div style="font-weight:650">☁️ Sincronização entre aparelhos</div>
+      <p class="muted small" style="margin:6px 0 10px">Digite a senha de sincronização (a mesma cadastrada no Netlify). Os dados deste aparelho sobem para a nuvem e os dos outros aparelhos descem para cá.</p>
+      <input type="password" id="sync-pass" autocomplete="current-password" placeholder="Senha de sincronização">
+      <button class="btn primary" data-action="sync-on">Conectar</button></div>`;
+  return sync + `<div class="card"><div style="font-weight:650">Backup dos dados</div>
+    <p class="muted small" style="margin:6px 0 4px">${syncKey ? 'Os dados já ficam guardados na nuvem, mas um backup extra de vez em quando não faz mal' : 'Tudo fica guardado só neste aparelho. Faça um backup de vez em quando e salve no Arquivos/iCloud'} — ele inclui as fotos.</p>
+    <div class="small">Último backup: <b>${last ? new Date(+last).toLocaleDateString('pt-BR') : 'nunca'}</b></div>
+    <button class="btn primary" data-action="export">Exportar backup</button>
+    <button class="btn ghost" data-action="import">Restaurar de um backup</button></div>
+  <div class="card"><div style="font-weight:650">Instalar na tela de início</div>
+    <p class="muted small" style="margin:6px 0 0">No Safari: botão Compartilhar → <b>Adicionar à Tela de Início</b>. Use sempre pelo ícone, pois os dados do app instalado ficam separados dos do Safari.</p></div>
+  <div class="card"><div class="kv"><span>Clientes</span><span>${clients.length}</span></div><div class="kv"><span>Serviços</span><span>${services.length}</span></div>
+    <div class="kv"><span>Armazenamento</span><span id="storage">…</span></div></div>`;
+}
+async function fillStorageInfo() {
+  const el = $('#storage'); if (!el) return;
+  try {
+    const p = navigator.storage && navigator.storage.persisted ? await navigator.storage.persisted() : false;
+    const e = navigator.storage && navigator.storage.estimate ? await navigator.storage.estimate() : null;
+    el.textContent = (e ? (e.usage / 1048576).toFixed(1) + ' MB' : '') + (p ? ' · protegido' : '');
+  } catch (err) { el.textContent = '—'; }
+}
+const blobToDataURL = b => new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(b); });
+async function exportData() {
+  const photos = await dbAll('photos'); const ph = {};
+  for (const p of photos) ph[p.id] = await blobToDataURL(p.blob);
+  const data = {app: 'patinhas', version: 1, exportedAt: new Date().toISOString(), clients, services, photos: ph};
+  const name = `patinhas-backup-${todayS()}.json`;
+  const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+  const file = new File([blob], name, {type: 'application/json'});
+  let ok = false;
+  if (navigator.canShare && navigator.canShare({files: [file]})) {
+    try { await navigator.share({files: [file], title: name}); ok = true; } catch (e) { if (e.name === 'AbortError') return; }
+  }
+  if (!ok) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
+  try { localStorage.setItem('lastBackup', Date.now()); } catch (e) {}
+  render(true);
+}
+async function importData(file) {
+  try {
+    const data = JSON.parse(await file.text());
+    if (data.app !== 'patinhas') throw new Error('Arquivo não é um backup do Patinhas.');
+    if (!confirm(`Restaurar ${data.clients.length} clientes e ${data.services.length} serviços? Os dados atuais deste aparelho serão substituídos.`)) return;
+    const oldC = clients.map(x => x.id), oldS = services.map(x => x.id);
+    await dbClear('clients'); await dbClear('services'); await dbClear('photos'); photoCache.clear();
+    for (const [id, url] of Object.entries(data.photos || {})) { await dbPut('photos', {id, blob: await (await fetch(url)).blob()}); if (syncKey) await queuePhoto(id, 'put'); }
+    clients = []; services = [];
+    for (const c of data.clients) { if (syncKey) await saveRec('clients', c); else await dbPut('clients', c); clients.push(c); }
+    for (const s of data.services) { if (syncKey) await saveRec('services', s); else await dbPut('services', s); services.push(s); }
+    if (syncKey) {
+      for (const id of oldC) if (!clients.some(x => x.id === id)) await removeRec('clients', id);
+      for (const id of oldS) if (!services.some(x => x.id === id)) await removeRec('services', id);
+    }
+    toast('Backup restaurado'); location.hash = '#agenda';
+  } catch (e) { alert('Não foi possível restaurar: ' + e.message); }
+}
+
+/* ---------- eventos ---------- */
+document.addEventListener('click', async e => {
+  const el = e.target.closest('[data-action]'); if (!el) return;
+  e.preventDefault(); e.stopPropagation();
+  const d = el.dataset; const sv = d.sid && services.find(s => s.id === d.sid);
+  switch (d.action) {
+    case 'back': if (history.length > 1) history.back(); else location.hash = '#agenda'; break;
+    case 'pick-day': selDate = d.d; if (parseHash().route !== 'agenda') location.hash = '#agenda'; else render(true); break;
+    case 'week': selDate = addDays(selDate, +d.n); render(true); break;
+    case 'today': selDate = todayS(); render(true); break;
+    case 'toggle-done': if (sv) { sv.done = sv.done || {}; if (sv.done[d.key]) delete sv.done[d.key]; else sv.done[d.key] = true; await saveRec('services', sv); render(true); } break;
+    case 'toggle-check': if (sv) { sv.checks = sv.checks || {}; const arr = sv.checks[d.key] || []; const i = +d.i; sv.checks[d.key] = arr.includes(i) ? arr.filter(x => x !== i) : [...arr, i]; await saveRec('services', sv); render(true); } break;
+    case 'set-pay': if (sv) { sv.payStatus = d.val; await saveRec('services', sv); render(true); toast(PAY[d.val]); } break;
+    case 'cycle-pay': if (sv) { const order = ['pendente', 'cobrado', 'pago']; sv.payStatus = order[(order.indexOf(sv.payStatus) + 1) % 3]; await saveRec('services', sv); render(true); } break;
+    case 'all-visits': showAllVisits = !showAllVisits; render(true); break;
+    case 'reveal': el.textContent = d.code; break;
+    case 'zoom': { const u = await photoURL(d.id); if (u) { $('#lightbox img').src = u; $('#lightbox').hidden = false; } break; }
+    case 'svc-filter': svcFilter = d.f; render(true); break;
+    case 'fin-mode': finMode = d.m; render(true); break;
+    case 'fin-nav': { const n = +d.n; if (finMode === 'semana') finAnchor = addDays(finAnchor, 7 * n); else { const x = parseD(finAnchor); finAnchor = fmtD(new Date(x.getFullYear(), x.getMonth() + n, 1)); } chartYear = parseD(finAnchor).getFullYear(); render(true); break; }
+    // formulários
+    case 'set':
+      if (d.path === 'mode') {
+        if (d.val === 'personalizado' && form.mode !== 'personalizado') toCustom();
+        else if (d.val === 'repetir' && form.mode === 'personalizado') { const s = formAsService(); if (s.start) { form.start = s.start; form.end = s.end; } form.mode = 'repetir'; }
+      } else setPath(form, d.path, d.val);
+      render(true); break;
+    case 'set-kind': if (d.val === 'compromisso') setKind('compromisso'); else form.kind = 'servico'; render(true); break;
+    case 'to-custom': toCustom(); render(true); break;
+    case 'add-visit': { const last = form.visits[form.visits.length - 1]; form.visits.push({date: last ? last.date : todayS(), time: ''}); render(true); break; }
+    case 'remove-visit': form.visits.splice(+d.i, 1); if (!form.visits.length) form.visits.push({date: todayS(), time: ''}); render(true); break;
+    case 'year-nav': chartYear += +d.n; render(true); break;
+    case 'fin-month': finMode = 'mes'; finAnchor = fmtD(new Date(chartYear, +d.m, 1)); render(true); window.scrollTo({top: 0, behavior: 'smooth'}); break;
+    case 'toggle-wd': { const i = +d.i; form.weekdays = form.weekdays.includes(i) ? form.weekdays.filter(x => x !== i) : [...form.weekdays, i].sort(); render(true); break; }
+    case 'add-time': form.times.push(''); render(true); break;
+    case 'remove-time': form.times.splice(+d.i, 1); if (!form.times.length) form.times.push(''); render(true); break;
+    case 'add-pet': form.pets.push({id: uid(), name: '', species: '', photo: null}); render(true); break;
+    case 'remove-pet': { const p = form.pets.splice(+d.i, 1)[0]; if (p && p.photo) form._del.push(p.photo); render(true); break; }
+    case 'pick-photo': pickTarget = d.path; $('#filepick').value = ''; $('#filepick').click(); break;
+    case 'remove-photo': { const old = getPath(form, d.path); if (old) form._del.push(old); setPath(form, d.path, null); render(true); break; }
+    case 'save-service': saveService(); break;
+    case 'delete-service': if (sv && confirm('Excluir este serviço?')) { await removeRec('services', sv.id); services = services.filter(s => s.id !== sv.id); form = null; toast('Serviço excluído'); location.replace('#servicos'); } break;
+    case 'new-client-from-service': formStack.push(form); location.hash = '#cliente-editar/new?ret=1'; break;
+    case 'save-client': saveClient(d.ret === '1'); break;
+    case 'delete-client': {
+      const c = clientById(form.id); if (!c) break; const svs = services.filter(s => s.clientId === c.id);
+      if (!confirm(svs.length ? `Excluir o cliente e ${svs.length} serviço(s) dele?` : 'Excluir este cliente?')) break;
+      for (const s of svs) await removeRec('services', s.id);
+      services = services.filter(s => s.clientId !== c.id);
+      for (const p of (c.pets || [])) await deletePhoto(p.photo); await deletePhoto(c.keyPhoto);
+      await removeRec('clients', c.id); clients = clients.filter(x => x.id !== c.id); form = null; toast('Cliente excluído'); location.replace('#clientes'); break;
+    }
+    case 'export': exportData(); break;
+    case 'sync-on': connectSync($('#sync-pass') && $('#sync-pass').value); break;
+    case 'sync-now': sync(); break;
+    case 'sync-off': disconnectSync(); break;
+    case 'import': $('#importpick').value = ''; $('#importpick').click(); break;
+  }
+});
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.dataset.bind && form) {
+    setPath(form, el.dataset.bind, el.value);
+    if (el.dataset.bind === 'start' && el.value && (!form.end || form.end < el.value)) { form.end = el.value; const end = $('#end'); if (end) end.value = el.value; }
+    if (el.dataset.live) updateLive();
+  }
+  if (el.dataset.filter === 'svc') { svcSearch = el.value; $('#list').innerHTML = servicesList(); hydratePhotos(); }
+  if (el.dataset.filter === 'cli') { cliSearch = el.value; $('#list').innerHTML = clientsList(); hydratePhotos(); }
+});
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el.dataset.bind && form) { setPath(form, el.dataset.bind, el.value); if (el.dataset.live) updateLive(); if (el.dataset.rerender) render(true); }
+  if (el.dataset.change === 'goto' && el.value) { selDate = el.value; render(true); }
+});
+$('#filepick').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f || !form || !pickTarget) return;
+  try {
+    const blob = await compressImage(f); const id = uid();
+    await dbPut('photos', {id, blob}); queuePhoto(id, 'put');
+    const old = getPath(form, pickTarget); if (old) form._del.push(old);
+    setPath(form, pickTarget, id); render(true);
+  } catch (err) { alert('Não foi possível carregar a foto.'); }
+});
+$('#importpick').addEventListener('change', e => { const f = e.target.files[0]; if (f) importData(f); });
+$('#lightbox').addEventListener('click', () => { $('#lightbox').hidden = true; });
+window.addEventListener('hashchange', () => render(false));
+
+/* ---------- início ---------- */
+(async () => {
+  try {
+    await openDB();
+    clients = await dbAll('clients'); services = await dbAll('services');
+    syncKey = (await metaGet('syncKey')) || null; lastRev = (await metaGet('lastRev')) || 0;
+    cleanupPhotos().catch(() => {});
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  } catch (e) { view.innerHTML = '<div class="empty">Não foi possível abrir o armazenamento deste navegador.</div>'; return; }
+  render();
+  if (syncKey) sync();
+  setInterval(() => { if (document.visibilityState === 'visible') sync(); }, 60000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') sync(); });
+  window.addEventListener('online', () => sync());
+})();
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "name": "patinhas",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "description": "App de pet sitter com sincronização entre aparelhos",
+  "dependencies": {
+    "@netlify/blobs": "^10.7.13"
+  }
+}
